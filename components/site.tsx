@@ -105,19 +105,19 @@ export function Footer() {
       <div className="container footer-bottom">
         <span>© {new Date().getFullYear()} Airshow Events</span>
         <span>Independent. Made for the love of flight.</span>
-        <Link href="/about/">About this demo & photo credits</Link>
+        <Link href="/about/">Sources & photo credits</Link>
       </div>
     </footer>
   );
 }
-export function DemoNotice() {
+export function DataNotice() {
   return (
     <div className="demo-notice">
       <span className="demo-dot" />
-      <span className="whitespace-nowrap">Demo season</span>
+      <span className="whitespace-nowrap">2026 & 2027</span>
       <span>·</span>
       <span>
-        Illustrative dates and aircraft. Check organisers before making plans.
+        Organiser-sourced dates. Coverage is growing; programmes may change.
       </span>
     </div>
   );
@@ -131,7 +131,7 @@ export function Status({ status }: { status: EventStatus }) {
   );
 }
 export function LiveStatus({ event }: { event: Airshow }) {
-  const [status, setStatus] = useState(event.status);
+  const [status, setStatus] = useState(() => eventStatus(event));
   useEffect(() => {
     setStatus(eventStatus(event));
   }, [event]);
@@ -179,7 +179,7 @@ export function EventCard({
         </div>
         <div className="card-bottom">
           <span>
-            {count > 0 ? `${count} confirmed` : "Line-up to come"}
+            {count > 0 ? `${count} programme records` : "No aircraft records yet"}
             <Icon name="arrow" />
           </span>
         </div>
@@ -198,7 +198,7 @@ export function AircraftCard({ slug }: { slug: string }) {
         <h3>{plane.name}</h3>
         <p>
           <span>
-            <NumberTicker value={count} /> appearances in the demo calendar
+            <NumberTicker value={count} /> programme records
           </span>{" "}
           <Icon name="arrow" />
         </p>
@@ -234,12 +234,12 @@ export function ExportButton({
     );
     const a = document.createElement("a");
     a.href = url;
-    a.download = "airshow-events-demo.ics";
+    a.download = "airshow-events.ics";
     a.click();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
     showToast({
       title: "Calendar exported",
-      description: `${eligible.length} demo ${eligible.length === 1 ? "event" : "events"} ready to add to your calendar.`,
+      description: `${eligible.length} ${eligible.length === 1 ? "event" : "events"} ready to add to your calendar.`,
       status: "success",
     });
   }

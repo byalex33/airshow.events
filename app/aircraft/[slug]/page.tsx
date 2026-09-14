@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { aircraft, appearances, events } from "@/lib/content";
-import { DemoNotice, EventCard, ExportButton, Status } from "@/components/site";
+import { DataNotice, EventCard, ExportButton, Status } from "@/components/site";
 export function generateStaticParams() {
   return aircraft.map((a) => ({ slug: a.slug }));
 }
@@ -49,7 +49,7 @@ export default async function Page({
         </div>
       </section>
       <div className="container page-main">
-        <DemoNotice />
+        <DataNotice />
         <div className="aircraft-intro">
           <p>{plane.description}</p>
           <ExportButton
@@ -64,8 +64,7 @@ export default async function Page({
             <span className="eyebrow">FOLLOW THEIR SEASON</span>
             <h2>Where to see them.</h2>
             <p>
-              All {bookings.length} example appearances, including provisional
-              and past dates.
+              {bookings.length} sourced programme records, including past dates. Coverage is partial; historical records describe scheduled participation.
             </p>
           </div>
         </div>
@@ -73,9 +72,11 @@ export default async function Page({
           {bookings.map((a) => (
             <div key={a.event}>
               <div style={{ marginBottom: 10, fontSize: 11, color: "#67747c" }}>
-                Aircraft appearance: <Status status={a.status} />
+                Programme status: <Status status={a.status} />
               </div>
               <EventCard event={events.find((e) => e.slug === a.event)!} />
+              <p>{a.details}</p>
+              <p><a href={a.sourceUrl} target="_blank" rel="noreferrer">Official programme ↗</a> · Checked {a.checkedAt}</p>
             </div>
           ))}
         </div>

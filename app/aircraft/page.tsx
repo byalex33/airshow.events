@@ -1,10 +1,10 @@
 import { aircraft } from "@/lib/content";
-import { AircraftCard, DemoNotice } from "@/components/site";
+import { AircraftCard, DataNotice } from "@/components/site";
 export const metadata = { title: "Aircraft & display teams" };
 export default function Page() {
   return (
     <main id="main" className="container page-main">
-      <DemoNotice />
+      <DataNotice />
       <div className="page-heading">
         <div>
           <span className="eyebrow">FOLLOW THE SOUND</span>

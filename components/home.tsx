@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { TextReveal } from "@/components/beui/text-reveal";
 import {
   Countdown,
-  DemoNotice,
+  DataNotice,
   EventCard,
   Icon,
   Status,
@@ -26,7 +26,7 @@ export default function Home() {
       <section className="flight-intro container">
         <div className="flight-copy">
           <span className="eyebrow hero-kicker">
-            UK AIRSHOWS / THE 2026 SEASON
+            UK AIRSHOWS / 2026 & 2027
           </span>
           <h1>
             <TextReveal text="A good day" stagger={0.06} />
@@ -73,7 +73,7 @@ export default function Home() {
         </figure>
       </section>
       <div className="container">
-        <DemoNotice />
+        <DataNotice />
         {next && (
           <section className="next-show">
             <div className="next-label">
@@ -122,8 +122,8 @@ export default function Home() {
         <div className="container dispatch-grid">
           <div className="dispatch-intro">
             <span className="eyebrow">THE FLIGHTLINE</span>
-            <h2>Recently confirmed</h2>
-            <p>The latest aircraft added to the demo flying programmes.</p>
+            <h2>Aircraft programme updates</h2>
+            <p>Recently checked organiser programmes, including past events. These are partial records.</p>
             <Link className="text-link" href="/aircraft/">
               Explore aircraft & teams <Icon name="arrow" />
             </Link>
@@ -131,7 +131,7 @@ export default function Home() {
           <div className="announcements">
             {appearances
               .filter((a) => a.status === "confirmed")
-              .sort((a, b) => b.announced.localeCompare(a.announced))
+              .sort((a, b) => b.checkedAt.localeCompare(a.checkedAt))
               .slice(0, 3)
               .map((a) => {
                 const plane = aircraft.find((p) => p.slug === a.aircraft)!;
@@ -149,8 +149,8 @@ export default function Home() {
                       <div className="announcement-meta">
                         <Status status="confirmed" />
                         <span>
-                          {new Date(
-                            a.announced + "T12:00:00Z",
+                          Checked {new Date(
+                            a.checkedAt + "T12:00:00Z",
                           ).toLocaleDateString("en-GB", {
                             day: "numeric",
                             month: "short",

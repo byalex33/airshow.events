@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { aircraft, appearances, dateLabel, events } from "@/lib/content";
 import {
   Countdown,
-  DemoNotice,
+  DataNotice,
   ExportButton,
   Icon,
   LiveStatus,
@@ -57,16 +57,17 @@ export default async function Page({
         </div>
       </section>
       <div className="container">
-        <DemoNotice />
+        <DataNotice />
         <div className="detail-layout">
           <div className="detail-copy">
             <span className="eyebrow">{event.subtitle.toUpperCase()}</span>
             <h2>A day with your eyes on the sky.</h2>
             <p>{event.description}</p>
+            <p><a href={event.sourceUrl} target="_blank" rel="noreferrer">Official date source ↗</a> · Checked {event.checkedAt}</p>
+            <p>Photography is representative and does not confirm aircraft attendance.</p>
             <h2>Aircraft on the programme</h2>
             <p>
-              Example appearances. Each aircraft has its own confirmation
-              status; flying is subject to change.
+              {lineup.length ? "A partial record of the organiser’s published programme. For past events, this records planned participation, not proof that an aircraft flew." : "No aircraft confirmations recorded yet. See the organiser for the full programme."} Flying is subject to change.
             </p>
             {lineup.map((a) => {
               const plane = aircraft.find((p) => p.slug === a.aircraft)!;
@@ -81,7 +82,9 @@ export default async function Page({
                         {plane.name}
                       </Link>
                     </h3>
-                    <p>{plane.category}</p>
+                    <p>{a.details}</p>
+                    <a href={a.sourceUrl} target="_blank" rel="noreferrer">Programme source ↗</a>
+                    <p>Checked {a.checkedAt}</p>
                   </div>
                   <Status status={a.status} />
                 </div>
@@ -92,11 +95,11 @@ export default async function Page({
             <div className="travel-box">
               <span className="eyebrow">PLAN YOUR ARRIVAL</span>
               <p>
-                {event.location} · {event.postcode}
+                {event.location}{event.postcode ? ` · ${event.postcode}` : ""}
               </p>
               <a
                 className="text-link"
-                href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(event.postcode)}`}
+                href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(event.postcode || event.location)}`}
                 target="_blank"
                 rel="noreferrer"
               >
@@ -112,14 +115,14 @@ export default async function Page({
                 ☀
               </span>
               <div>
-                <h3>Weather at the airfield</h3>
+                <h3>Local weather</h3>
                 <p>
-                  No live forecast is connected to this demo. Check a local
+                  Check a local
                   forecast close to the event and the organiser’s updates on the
                   day.
                 </p>
                 <a
-                  href={`https://www.metoffice.gov.uk/weather/search?query=${encodeURIComponent(event.postcode)}`}
+                  href={`https://www.metoffice.gov.uk/weather/search?query=${encodeURIComponent(event.postcode || event.location)}`}
                   target="_blank"
                   rel="noreferrer"
                 >
@@ -141,7 +144,7 @@ export default async function Page({
               <dt>Location</dt>
               <dd>{event.region}</dd>
             </dl>
-            {event.status !== "cancelled" && event.status !== "completed" && (
+            {(
               <Button asChild>
                 <a
                   href={event.ticketUrl || event.officialUrl}
@@ -157,8 +160,7 @@ export default async function Page({
             )}
             <ExportButton source={[event]} label="Add to calendar" />
             <p>
-              Illustrative listing. Ticket availability, dates and participation
-              must be verified with the organiser.
+              Dates checked {event.checkedAt}. Ticket availability and programmes can change. Older organiser pages may now advertise the next season.
             </p>
           </aside>
         </div>

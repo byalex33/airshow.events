@@ -1,34 +1,27 @@
-import { DemoNotice } from "@/components/site";
-export const metadata = { title: "About this demo & credits" };
+import { DataNotice } from "@/components/site";
+export const metadata = { title: "Sources & credits" };
 export default function Page() {
   return (
     <main id="main" className="container page-main">
-      <DemoNotice />
+      <DataNotice />
       <div className="page-heading">
         <div>
           <span className="eyebrow">INDEPENDENT, BY DESIGN</span>
           <h1>For the love of flight.</h1>
           <p>
-            Airshow Events is an original prototype for discovering UK flying
+            Airshow Events is an independent guide for discovering UK flying
             displays.
           </p>
         </div>
       </div>
       <div className="credits">
-        <h2>A demo season</h2>
-        <p>
-          All event dates, event statuses and aircraft appearances on this
-          website are illustrative, including those associated with real venues
-          and event names. Several listings are invented. They are not verified
-          announcements, ticket offers or travel advice. Official links point to
-          visitor information, not a guaranteed event booking.
-        </p>
-        <p>
-          Calendar downloads are marked [DEMO]. Weather forecasts are not
-          connected. Confirm all arrangements directly with the organiser before
-          travelling.
-        </p>
+        <h2>Dates with a source</h2>
+        <p>Our first import covers selected 2026 events, including past dates, and published 2027 dates. Each listing links to an official organiser, council or RAF source and records when it was checked. This is a growing calendar, not a complete UK schedule.</p>
+        <p>Event confirmation is separate from aircraft participation. Aircraft records describe published programmes, not proof that a display took place. Empty line-ups mean we have not recorded confirmations. A Spitfire entry groups the aircraft type; operator and variant details appear with each programme record.</p>
+        <p>Sources were checked on 14 September 2026. Updates are reviewed manually. Dates, ticket availability and flying can change. Calendar downloads are snapshots and will not update automatically. Check the organiser before travelling.</p>
+        <p>Map pins show approximate venues, not entrance gates. Local weather links lead to the Met Office; we do not display a live forecast.</p>
         <h2>Photography</h2>
+        <p>Images are representative, not evidence of an aircraft’s attendance. The pictured Spitfire MH434 and Typhoon ZK372 may differ from the aircraft on a programme.</p>
         <ul>
           <li>
             Red Arrows:{" "}

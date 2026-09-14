@@ -9,7 +9,7 @@ import {
   TabsTrigger,
   TabsContent,
 } from "@/components/beui/tabs";
-import { DemoNotice, EventCard, ExportButton, Icon } from "@/components/site";
+import { DataNotice, EventCard, ExportButton, Icon } from "@/components/site";
 import { Button } from "@/components/ui/button";
 import {
   MorphSelect,
@@ -84,7 +84,7 @@ export default function Calendar() {
     const tool = {
       name: "search_airshows",
       description:
-        "Set the visible airshow search text, keeping the current filters, and return matching demo events.",
+        "Set the visible airshow search text, keeping the current filters, and return matching events.",
       inputSchema: {
         type: "object",
         properties: { query: { type: "string", maxLength: 200 } },
@@ -147,7 +147,7 @@ export default function Calendar() {
   }
   return (
     <main id="main" className="container page-main">
-      <DemoNotice />
+      <DataNotice />
       <div className="page-heading">
         <div>
           <span className="eyebrow">THE UK, FROM THE FLIGHTLINE</span>

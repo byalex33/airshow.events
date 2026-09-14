@@ -1,6 +1,6 @@
 # Airshow Events
 
-An original UK airshow discovery app built with Next.js App Router, TypeScript, Tailwind CSS, shadcn/ui buttons, BeUI animated tabs and Runeicons. All schedules and appearances are demo data.
+An original UK airshow discovery app built with Next.js App Router, TypeScript, Tailwind CSS, shadcn/ui buttons, BeUI animated tabs and Runeicons. The calendar contains organiser-sourced 2026 and 2027 records.
 
 ## Run
 
@@ -23,13 +23,13 @@ The build exports a static site to `out/`. Serve that folder with a static host 
 
 ## Content
 
-`lib/content.ts` owns typed event, aircraft and appearance records. Event slugs and aircraft slugs are stable identifiers. Appearances link the two records, with independent participation status and announcement date. The homepage announcement feed derives from appearances, and detail routes are generated from the same records. Add a record and rebuild to publish a new route. A CMS can later supply these arrays without changing their consumers.
+`lib/content.ts` owns typed event, aircraft and appearance records. Event slugs and aircraft slugs are stable identifiers. Appearances link the two records, with independent participation status, programme source, check date and day/variant notes. The homepage announcement feed derives from appearances, and detail routes are generated from the same records. Add a record and rebuild to publish a new route. A CMS can later supply these arrays without changing their consumers.
 
-Dates are ISO calendar dates in the UK. End dates are inclusive. Calendar export converts the end to an exclusive all-day date, escapes text, folds UTF-8 lines and omits cancelled/completed events. Every exported demo event carries a [DEMO] prefix. Event status rolls completed dates forward on the client.
+Dates are ISO calendar dates in the UK. End dates are inclusive. Calendar export converts the end to an exclusive all-day date, escapes text, folds UTF-8 lines and omits cancelled/completed events. Exports include the source and verification date, and do not refresh automatically. Event status rolls completed dates forward on the client.
 
 Search and filters are reflected in the URL. Maps use Leaflet with OpenStreetMap tiles and matching text links. No account, database or API keys are required.
 
-Weather intentionally shows an unavailable state with a Met Office link. Replace that component with a real forecast provider before showing weather readings. Ticket links go to official visitor information and are not claims of availability. Replace and verify the demo dates, sources and participation before a public launch.
+Weather intentionally shows an unavailable state with a Met Office link. Replace that component with a real forecast provider before showing weather readings. Ticket links go to official visitor information and are not claims of availability. The first import is partial: 23 events and six programme records, checked on 14 September 2026. Add only dates backed by an official source. Do not infer aircraft participation from event confirmation or promotional photography. Historical programmes describe planned participation, not proof of flight. Review sources manually and update checkedAt when verifying records.
 
 The optional `search_airshows` WebMCP tool shares the calendar's visible search state and is registered only when the browser exposes `document.modelContext`. It validates input and unregisters when the component unmounts.
 
