@@ -167,16 +167,17 @@ export function EventCard({
         <h3>
           <Link href={`/airshows/${event.slug}/`}>{event.name}</Link>
         </h3>
-        <p className="location">
-          <Icon name="pin" />
-          {event.location}
-        </p>
-        <div className="card-bottom">
-          <span>
-            {event.admission === "Free" ? "Free entry" : event.admission}
-            <b>·</b>
-            {event.venue}
+        <div className="event-tags">
+          <span className="event-tag">
+            <Icon name="pin" />
+            {event.location}
           </span>
+          <span className="event-tag">
+            {event.admission === "Free" ? "Free entry" : event.admission}
+          </span>
+          <span className="event-tag">{event.venue}</span>
+        </div>
+        <div className="card-bottom">
           <span>
             {count > 0 ? `${count} confirmed` : "Line-up to come"}
             <Icon name="arrow" />

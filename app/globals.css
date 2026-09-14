@@ -2106,3 +2106,25 @@ button[data-slot="button"] {
     white-space: normal;
   }
 }
+
+.event-tags {
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px;
+  margin:14px 0 18px;
+}
+.event-tag {
+  display:inline-flex;
+  align-items:center;
+  gap:5px;
+  max-width:100%;
+  padding:5px 9px;
+  border:1px solid var(--line);
+  border-radius:7px;
+  background:var(--surface-muted);
+  color:var(--muted);
+  font-size:12px;
+  line-height:1.4;
+  overflow-wrap:anywhere;
+}
+.event-tag .icon { width:13px; height:13px; }
