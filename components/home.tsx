@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { TextReveal } from "@/components/beui/text-reveal";
 import {
   Countdown,
   DemoNotice,
@@ -39,9 +40,13 @@ export default function Home() {
             <span className="pulse-dot" /> YOUR NEXT GREAT DAY OUT, ABOVE.
           </span>
           <h1>
-            Less scrolling.
-            <br />
-            More <em>looking up.</em>
+            <TextReveal text="Less scrolling." stagger={0.06} />
+            <TextReveal
+              text="More looking up."
+              delay={0.12}
+              stagger={0.06}
+              className="hero-reveal-line"
+            />
           </h1>
           <p>
             Chase the roar. Follow your favourites.
@@ -108,7 +113,12 @@ export default function Home() {
           <div className="section-heading">
             <div>
               <span className="eyebrow">MAKE A DAY OF IT</span>
-              <h2>Your next sky-high moment.</h2>
+              <TextReveal
+                as="h2"
+                text="Your next sky-high moment."
+                whileInView
+                stagger={0.045}
+              />
               <p>The big weekends. The hidden gems. A reason to get outside.</p>
             </div>
             <Link className="text-link" href="/calendar/">
@@ -190,20 +200,6 @@ export default function Home() {
               })}
           </div>
         </div>
-      </section>
-      <section className="container season-callout">
-        <div>
-          <span className="eyebrow">YOUR SEASON. YOUR SHORTLIST.</span>
-          <h2>Keep the good ones on your radar.</h2>
-          <p>
-            Save the shows you love. Build a calendar worth looking forward to.
-          </p>
-        </div>
-        <Button asChild>
-          <Link href="/saved/">
-            My airshows <Icon name="bookmark" />
-          </Link>
-        </Button>
       </section>
     </main>
   );

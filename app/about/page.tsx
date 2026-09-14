@@ -24,9 +24,8 @@ export default function Page() {
           visitor information, not a guaranteed event booking.
         </p>
         <p>
-          Saved airshows are stored only in your current browser. Calendar
-          downloads are marked [DEMO]. Weather forecasts are not connected.
-          Confirm all arrangements directly with the organiser before
+          Calendar downloads are marked [DEMO]. Weather forecasts are not
+          connected. Confirm all arrangements directly with the organiser before
           travelling.
         </p>
         <h2>Photography</h2>
@@ -63,10 +62,10 @@ export default function Page() {
         <h2>Made with open-source tools</h2>
         <p>
           Next.js, TypeScript and Tailwind CSS. Buttons from{" "}
-          <a href="https://ui.shadcn.com/">shadcn/ui</a>, animated tabs adapted
-          from <a href="https://beui.dev/">BeUI</a>, and outline icons from{" "}
-          <a href="https://www.runeicons.com/">Runeicons</a>. Maps use Leaflet
-          and OpenStreetMap contributors.
+          <a href="https://ui.shadcn.com/">shadcn/ui</a>, motion components
+          adapted from <a href="https://beui.dev/">BeUI</a>, and outline icons
+          from <a href="https://www.runeicons.com/">Runeicons</a>. Maps use
+          Leaflet and OpenStreetMap contributors.
         </p>
         <p>
           <a href="/licenses/shadcn.txt">shadcn/ui licence</a> ·{" "}

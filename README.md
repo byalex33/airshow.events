@@ -25,7 +25,7 @@ The build exports a static site to `out/`. Serve that folder with a static host 
 
 Dates are ISO calendar dates in the UK. End dates are inclusive. Calendar export converts the end to an exclusive all-day date, escapes text, folds UTF-8 lines and omits cancelled/completed events. Every exported demo event carries a [DEMO] prefix. Event status rolls completed dates forward on the client.
 
-Search and filters are reflected in the URL. Bookmarks use browser localStorage and remain device-local, with graceful storage failure handling. Maps use Leaflet with OpenStreetMap tiles and matching text links. No account, database or API keys are required.
+Search and filters are reflected in the URL. Maps use Leaflet with OpenStreetMap tiles and matching text links. No account, database or API keys are required.
 
 Weather intentionally shows an unavailable state with a Met Office link. Replace that component with a real forecast provider before showing weather readings. Ticket links go to official visitor information and are not claims of availability. Replace and verify the demo dates, sources and participation before a public launch.
 
@@ -33,4 +33,4 @@ The optional `search_airshows` WebMCP tool shares the calendar's visible search 
 
 ## Third-party assets
 
-Attribution and source links are in `/about/`; component licences are in `public/licenses/`. BeUI tabs have local accessibility adaptations for keyboard navigation and panel association. Runeicons are the original outline SVGs rendered using CSS masks. Photography is bundled locally with source and licence attribution on the credits page.
+Attribution and source links are in `/about/`; component licences are in `public/licenses/`. BeUI provides morph selects, mobile navigation dock, text reveals, number tickers, export toast stack, circle-blur theme toggle and global morphing search, alongside tabs. Local adaptations use Runeicons, accessible filter labels and keyboard navigation. Theme choice persists in browser storage; motion respects reduced-motion preferences. Runeicons are the original outline SVGs rendered using CSS masks. Photography is bundled locally with source and licence attribution on the credits page.

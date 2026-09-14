@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import { Footer, Header, SavedProvider } from "@/components/site";
+import { Footer, Header } from "@/components/site";
+import { ExperienceProvider, MobileDock } from "@/components/experience";
 import "./globals.css";
 export const metadata: Metadata = {
   title: {
@@ -16,13 +17,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en-GB">
+    <html lang="en-GB" suppressHydrationWarning>
       <body>
-        <SavedProvider>
+        <ExperienceProvider>
           <Header />
           {children}
           <Footer />
-        </SavedProvider>
+          <MobileDock />
+        </ExperienceProvider>
       </body>
     </html>
   );
