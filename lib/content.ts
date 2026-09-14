@@ -175,7 +175,7 @@ export const events: Airshow[] = [
     image: "/images/red-arrows.jpg",
     imageAlt: "Aerobatic jets with sweeping smoke trails",
     description:
-      "An invented free coastal display used to demonstrate the calendar. Enjoy the example itinerary and save it to test your shortlist.",
+      "An invented free coastal display used to demonstrate the calendar. Explore the example itinerary in the calendar.",
     travel:
       "Check local bus and rail services to Bournemouth. This is a demonstration listing, so no event travel arrangements are in place.",
     postcode: "BH2 5AA",

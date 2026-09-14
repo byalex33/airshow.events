@@ -24,8 +24,7 @@ export default function Page() {
           visitor information, not a guaranteed event booking.
         </p>
         <p>
-          Saved airshows are stored only in your current browser. Calendar
-          downloads are marked [DEMO]. Weather forecasts are not connected.
+          Calendar downloads are marked [DEMO]. Weather forecasts are not connected.
           Confirm all arrangements directly with the organiser before
           travelling.
         </p>

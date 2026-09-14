@@ -191,20 +191,6 @@ export default function Home() {
           </div>
         </div>
       </section>
-      <section className="container season-callout">
-        <div>
-          <span className="eyebrow">YOUR SEASON. YOUR SHORTLIST.</span>
-          <h2>Keep the good ones on your radar.</h2>
-          <p>
-            Save the shows you love. Build a calendar worth looking forward to.
-          </p>
-        </div>
-        <Button asChild>
-          <Link href="/saved/">
-            My airshows <Icon name="bookmark" />
-          </Link>
-        </Button>
-      </section>
     </main>
   );
 }

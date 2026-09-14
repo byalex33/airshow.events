@@ -185,20 +185,6 @@ p {
   right: 0;
   position: absolute;
 }
-.saved-nav {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 12px;
-}
-.saved-nav small {
-  display: grid;
-  place-items: center;
-  background: #263744;
-  min-width: 22px;
-  height: 22px;
-  border-radius: 4px;
-}
 .hero {
   height: 570px;
   position: relative;
@@ -532,28 +518,6 @@ p {
   background: #e8ecef;
   color: #59646d;
 }
-.save-button.compact {
-  position: absolute;
-  top: 12px;
-  right: 12px;
-  min-width: 34px;
-  width: 34px;
-  min-height: 34px;
-  height: 34px;
-  padding: 8px;
-  color: #fff;
-  background: #0b1c294d;
-  border: 1px solid #ffffff40;
-  backdrop-filter: blur(8px);
-}
-.save-button.is-saved {
-  color: #e9663f;
-  background: #fff;
-}
-.save-button.compact .icon {
-  width: 16px;
-  height: 16px;
-}
 .card-content {
   padding: 21px 20px 0;
 }
@@ -717,21 +681,6 @@ p {
 .announcement-event .icon {
   height: 13px;
   width: 13px;
-}
-.season-callout {
-  padding-top: 52px;
-  padding-bottom: 52px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 30px;
-}
-.season-callout h2 {
-  font-size: 28px;
-  margin: 10px 0;
-}
-.season-callout p {
-  font-size: 12px;
 }
 .footer {
   background: var(--midnight);
@@ -1223,24 +1172,6 @@ p {
 .skip:focus {
   top: 12px;
 }
-.toast {
-  position: fixed;
-  bottom: 24px;
-  right: 24px;
-  max-width: 360px;
-  background: #102736;
-  color: white;
-  padding: 16px 20px;
-  border: 1px solid #5f7583;
-  border-radius: 6px;
-  z-index: 100;
-  font-size: 12px;
-  display: flex;
-  gap: 20px;
-}
-.toast button {
-  font-size: 20px;
-}
 .not-found {
   text-align: center;
   padding: 120px 20px;
@@ -1362,13 +1293,6 @@ p {
   }
   .header nav a.active:after {
     bottom: 0;
-  }
-  .saved-nav {
-    margin-top: 3px;
-    gap: 7px;
-  }
-  .saved-nav > span:not(.icon) {
-    font-size: 11px;
   }
   .hero {
     height: 575px;
@@ -1558,20 +1482,6 @@ p {
   .announcement-event {
     font-size: 10px;
   }
-  .season-callout {
-    padding-top: 38px;
-    padding-bottom: 38px;
-    display: block;
-  }
-  .season-callout h2 {
-    font-size: 27px;
-  }
-  .season-callout p {
-    line-height: 1.7;
-  }
-  .season-callout [data-slot="button"] {
-    margin-top: 22px;
-  }
   .footer-top {
     flex-wrap: wrap;
     gap: 22px;
@@ -1724,12 +1634,6 @@ p {
   }
   .aircraft-card {
     height: 320px;
-  }
-  .toast {
-    left: 18px;
-    right: 18px;
-    bottom: 18px;
-    max-width: none;
   }
 }
 @media (prefers-reduced-motion: reduce) {

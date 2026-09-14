@@ -1,20 +1,13 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  createContext,
-  useContext,
-  useEffect,
-  useState,
-  type ReactNode,
-} from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   aircraft,
   appearances,
   calendarFile,
   dateLabel,
-  events,
   eventStatus,
   type Airshow,
   type EventStatus,
@@ -55,64 +48,8 @@ export function Brand() {
     </Link>
   );
 }
-const SavedContext = createContext({
-  ids: [] as string[],
-  ready: false,
-  toggle: (_id: string) => {},
-});
-export function SavedProvider({ children }: { children: ReactNode }) {
-  const [ids, setIds] = useState<string[]>([]);
-  const [ready, setReady] = useState(false);
-  const [error, setError] = useState("");
-  useEffect(() => {
-    try {
-      const stored = JSON.parse(localStorage.getItem("airshow-saved") || "[]");
-      if (Array.isArray(stored))
-        setIds(
-          stored.filter(
-            (s: unknown): s is string =>
-              typeof s === "string" && events.some((e) => e.slug === s),
-          ),
-        );
-    } catch {
-      setError("Saved airshows are unavailable in this browser.");
-    }
-    setReady(true);
-  }, []);
-  function toggle(id: string) {
-    if (!ready) return;
-    const next = ids.includes(id) ? ids.filter((s) => s !== id) : [...ids, id];
-    setIds(next);
-    try {
-      localStorage.setItem("airshow-saved", JSON.stringify(next));
-      setError("");
-    } catch {
-      setError(
-        "Saved for this visit only. Your browser could not store this change.",
-      );
-    }
-  }
-  return (
-    <SavedContext.Provider value={{ ids, ready, toggle }}>
-      {children}
-      {error && (
-        <div className="toast" role="alert">
-          {error}
-          <button
-            onClick={() => setError("")}
-            aria-label="Dismiss storage message"
-          >
-            ×
-          </button>
-        </div>
-      )}
-    </SavedContext.Provider>
-  );
-}
-export const useSaved = () => useContext(SavedContext);
 export function Header() {
   const path = usePathname();
-  const { ids } = useSaved();
   return (
     <>
       <a className="skip" href="#main">
@@ -138,14 +75,6 @@ export function Header() {
               Aircraft & teams
             </Link>
           </nav>
-          <Link
-            className={`saved-nav ${path === "/saved/" ? "active" : ""}`}
-            href="/saved/"
-          >
-            <Icon name="bookmark" />
-            <span>My airshows</span>
-            <small>{ids.length}</small>
-          </Link>
         </div>
       </header>
     </>
@@ -192,29 +121,6 @@ export function LiveStatus({ event }: { event: Airshow }) {
   }, [event]);
   return <Status status={status} />;
 }
-export function SaveButton({
-  event,
-  compact = false,
-}: {
-  event: Airshow;
-  compact?: boolean;
-}) {
-  const { ids, toggle, ready } = useSaved();
-  const saved = ids.includes(event.slug);
-  return (
-    <Button
-      variant="outline"
-      disabled={!ready}
-      aria-label={`${saved ? "Unsave" : "Save"} ${event.name}`}
-      aria-pressed={saved}
-      onClick={() => toggle(event.slug)}
-      className={`save-button ${compact ? "compact" : ""} ${saved ? "is-saved" : ""}`}
-    >
-      <Icon name="bookmark" />
-      {!compact && (saved ? "Airshow saved" : "Save airshow")}
-    </Button>
-  );
-}
 export function EventCard({
   event,
   list = false,
@@ -236,7 +142,6 @@ export function EventCard({
           <img src={event.image} alt="" loading="lazy" />
         </Link>
         <LiveStatus event={event} />
-        <SaveButton event={event} compact />
       </div>
       <div className="card-content">
         <div className="card-date">

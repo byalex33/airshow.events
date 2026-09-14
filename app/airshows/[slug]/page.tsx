@@ -7,7 +7,6 @@ import {
   ExportButton,
   Icon,
   LiveStatus,
-  SaveButton,
   Status,
 } from "@/components/site";
 import { Button } from "@/components/ui/button";
@@ -156,7 +155,6 @@ export default async function Page({
                 </a>
               </Button>
             )}
-            <SaveButton event={event} />
             <ExportButton source={[event]} label="Add to calendar" />
             <p>
               Illustrative listing. Ticket availability, dates and participation

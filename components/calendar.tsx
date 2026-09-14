@@ -14,7 +14,6 @@ import {
   EventCard,
   ExportButton,
   Icon,
-  useSaved,
 } from "@/components/site";
 import { Button } from "@/components/ui/button";
 import {
@@ -40,14 +39,9 @@ type ModelContext = {
     options: { signal: AbortSignal },
   ) => void | Promise<void>;
 };
-export default function Calendar({
-  savedOnly = false,
-}: {
-  savedOnly?: boolean;
-}) {
+export default function Calendar() {
   const [filters, setFilters] = useState<Filters>(emptyFilters);
   const [view, setView] = useState("cards");
-  const { ids, ready } = useSaved();
   const [loaded, setLoaded] = useState(false);
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -76,14 +70,7 @@ export default function Calendar({
       `${window.location.pathname}${params.size ? "?" + params.toString() : ""}`,
     );
   }, [filters, view, loaded]);
-  const source = useMemo(
-    () => (savedOnly ? events.filter((e) => ids.includes(e.slug)) : events),
-    [savedOnly, ids],
-  );
-  const results = useMemo(
-    () => filterEvents(filters, source),
-    [filters, source],
-  );
+  const results = useMemo(() => filterEvents(filters, events), [filters]);
   const active = Object.values(filters).filter(Boolean).length;
   useEffect(() => {
     const context = (document as Document & { modelContext?: ModelContext })
@@ -115,7 +102,7 @@ export default function Calendar({
           );
         const next = { ...filters, query: input.query };
         flushSync(() => setFilters(next));
-        return filterEvents(next, source).map((e) => ({
+        return filterEvents(next, events).map((e) => ({
           name: e.name,
           slug: e.slug,
           start: e.start,
@@ -128,7 +115,7 @@ export default function Calendar({
       ).catch(() => {});
     } catch {}
     return () => lifecycle.abort();
-  }, [filters, source]);
+  }, [filters]);
   function select(key: keyof Filters, label: string, options: string[]) {
     return (
       <label className="filter-field">
@@ -153,15 +140,11 @@ export default function Calendar({
       <div className="page-heading">
         <div>
           <span className="eyebrow">
-            {savedOnly
-              ? "YOUR PERSONAL FLIGHT PLAN"
-              : "THE UK, FROM THE FLIGHTLINE"}
+            THE UK, FROM THE FLIGHTLINE
           </span>
-          <h1>{savedOnly ? "My airshows." : "Find your next airshow."}</h1>
+          <h1>Find your next airshow.</h1>
           <p>
-            {savedOnly
-              ? "Your favourites, saved on this device. A season worth making time for."
-              : "From a seaside afternoon to a full weekend of flying. Find your kind of show."}
+            From a seaside afternoon to a full weekend of flying. Find your kind of show.
           </p>
         </div>
         <ExportButton source={results} />
@@ -242,20 +225,12 @@ export default function Calendar({
           </TabsList>
         </div>
         <TabsContent value={view}>
-          {savedOnly && !ready ? (
-            <div className="empty-state">Loading saved airshows…</div>
-          ) : results.length === 0 ? (
+          {results.length === 0 ? (
             <div className="empty-state">
-              <Icon name={savedOnly ? "bookmark" : "search"} />
-              <h2>
-                {savedOnly && !ids.length
-                  ? "Your season starts here."
-                  : "Nothing on this radar yet."}
-              </h2>
+              <Icon name="search" />
+              <h2>Nothing on this radar yet.</h2>
               <p>
-                {savedOnly && !ids.length
-                  ? "Tap the bookmark on an airshow to keep it here."
-                  : "Try another location or clear a filter to see more airshows."}
+                Try another location or clear a filter to see more airshows.
               </p>
               {active ? (
                 <Button onClick={() => setFilters(emptyFilters)}>
@@ -285,8 +260,7 @@ export default function Calendar({
         </TabsContent>
       </Tabs>
       <p className="calendar-footnote">
-        Flying programmes can change. Saved airshows stay on this browser;
-        exports include upcoming events only.
+        Flying programmes can change. Calendar exports include upcoming events only.
       </p>
     </main>
   );
