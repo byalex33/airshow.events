@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { ThemeProvider } from "next-themes";
-import { createContext, useContext, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useRef, type ReactNode } from "react";
 import {
   AnimatedToastStack,
   useAnimatedToastStack,
@@ -15,10 +15,34 @@ import { aircraft, events } from "@/lib/content";
 const ToastContext = createContext<(toast: ToastInput) => void>(() => {});
 export const useToast = () => useContext(ToastContext);
 export function ExperienceProvider({ children }: { children: ReactNode }) {
+  const path = usePathname();
+  const prompted = useRef(false);
   const { toasts, showToast, dismissToast } = useAnimatedToastStack({
     limit: 4,
     defaultDuration: 5000,
   });
+  useEffect(() => {
+    if (path.startsWith("/contact")) {
+      dismissToast("missing-event");
+      return;
+    }
+    if (prompted.current) return;
+    try {
+      if (sessionStorage.getItem("missing-event-prompt")) return;
+    } catch { /* Storage may be unavailable; the ref still prevents repeats. */ }
+    const timer = window.setTimeout(() => {
+      prompted.current = true;
+      try { sessionStorage.setItem("missing-event-prompt", "shown"); } catch {}
+      showToast({
+        id: "missing-event",
+        title: "Are we missing an event?",
+        description: <>Tell us <Link className="underline underline-offset-4" href="/contact/" onClick={() => dismissToast("missing-event")}>here</Link>.</>,
+        status: "info",
+        duration: 0,
+      });
+    }, 8000);
+    return () => window.clearTimeout(timer);
+  }, [path, showToast, dismissToast]);
   return (
     <ThemeProvider
       attribute="class"

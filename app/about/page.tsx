@@ -1,5 +1,11 @@
 import { DataNotice } from "@/components/site";
-export const metadata = { title: "Sources & credits" };
+import { pageMetadata } from "@/lib/metadata";
+import { events } from "@/lib/content";
+export const metadata = pageMetadata(
+  "Sources & credits",
+  "An independent UK airshow guide. Read about official sources, coverage, photography credits and open-source tools.",
+  "/about/",
+);
 export default function Page() {
   return (
     <main id="main" className="container page-main">
@@ -21,6 +27,8 @@ export default function Page() {
         <p>Sources were checked on 14 September 2026. Updates are reviewed manually. Dates, ticket availability and flying can change. Calendar downloads are snapshots and will not update automatically. Check the organiser before travelling.</p>
         <p>Map pins show approximate venues, not entrance gates. Local weather links lead to the Met Office; we do not display a live forecast.</p>
         <h2>Photography</h2>
+        <p>Event photographs come from the organisers’ linked pages and may show previous editions. Copyright remains with the credited photographers and organisations.</p>
+        <ul>{Array.from(new Map(events.filter(event => event.imageSource).map(event => [event.image, event])).values()).map(event => <li key={event.image}><a href={event.imageSource}>{event.name.replace(/ 202[67]$/, "")}</a>: {event.imageCredit}.</li>)}</ul>
         <p>Images are representative, not evidence of an aircraft’s attendance. The pictured Spitfire MH434 and Typhoon ZK372 may differ from the aircraft on a programme.</p>
         <ul>
           <li>

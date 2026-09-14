@@ -1,6 +1,11 @@
 import { aircraft } from "@/lib/content";
 import { AircraftCard, DataNotice } from "@/components/site";
-export const metadata = { title: "Aircraft & display teams" };
+import { pageMetadata } from "@/lib/metadata";
+export const metadata = pageMetadata(
+  "Aircraft & display teams",
+  "Meet the Red Arrows, Spitfire and Typhoon. Explore the aircraft and browse their published UK programme records.",
+  "/aircraft/",
+);
 export default function Page() {
   return (
     <main id="main" className="container page-main">

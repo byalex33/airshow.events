@@ -3,14 +3,16 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "check:airshows": "tsx scripts/check-airshows.ts",
     "dev": "next dev --hostname 0.0.0.0",
     "build": "next build",
     "start": "next start",
     "typecheck": "tsc --noEmit",
-    "test": "tsx --test tests/content.test.ts"
+    "test": "tsx --test tests/*.test.ts"
   },
   "dependencies": {
     "@radix-ui/react-slot": "^1.2.3",
+    "@vercel/blob": "^2.8.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "leaflet": "^1.9.4",

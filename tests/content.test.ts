@@ -2,6 +2,14 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { aircraft, appearances, calendarFile, emptyFilters, eventStatus, events, filterEvents, todayUK, upcoming } from "../lib/content";
 
+test("calendar puts nearest upcoming events first and most recently finished events last", () => {
+  const make = (slug: string, start: string, end = start) => ({ ...events[0], slug, start, end, status: "confirmed" as const });
+  const source = [make("old", "2026-05-01"), make("later", "2027-05-01"), make("recent", "2026-09-12"), make("next", "2026-09-20"), make("ongoing", "2026-09-13", "2026-09-15")];
+  assert.deepEqual(filterEvents(emptyFilters, source, "2026-09-14").map(e => e.slug), ["ongoing", "next", "later", "recent", "old"]);
+  assert.deepEqual(filterEvents({ ...emptyFilters, status: "completed" }, source, "2026-09-14").map(e => e.slug), ["recent", "old"]);
+  assert.equal(source[0].slug, "old");
+});
+
 test("sourced content, filters, status rollover and calendar exports", () => {
   assert.equal(new Set(events.map(e => e.slug)).size, events.length);
   for (const e of events) {

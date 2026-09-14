@@ -1,5 +1,10 @@
 import Calendar from "@/components/calendar";
-export const metadata = { title: "Airshow calendar" };
+import { pageMetadata } from "@/lib/metadata";
+export const metadata = pageMetadata(
+  "Airshow calendar",
+  "Find a day worth looking up for. Browse UK airshows by date, location, aircraft and free entry. Browse sourced 2026 and 2027 listings.",
+  "/calendar/",
+);
 export default function Page() {
   return <Calendar />;
 }

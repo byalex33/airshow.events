@@ -1,7 +1,8 @@
 import Link from "next/link";
+import { pageMetadata } from "@/lib/metadata";
 import { notFound } from "next/navigation";
 import { aircraft, appearances, events } from "@/lib/content";
-import { DataNotice, EventCard, ExportButton, Status } from "@/components/site";
+import { DataNotice, EventCard, ExportButton, Icon, Status } from "@/components/site";
 export function generateStaticParams() {
   return aircraft.map((a) => ({ slug: a.slug }));
 }
@@ -12,10 +13,14 @@ export async function generateMetadata({
 }) {
   const { slug } = await params;
   const plane = aircraft.find((a) => a.slug === slug);
-  return {
-    title: plane?.name ?? "Aircraft not found",
-    description: plane?.description,
-  };
+  if (!plane) notFound();
+  return pageMetadata(
+    plane.name,
+    `Explore ${plane.name}, ${plane.category.toLowerCase()} operated by ${plane.operator}. Browse sourced UK programme records.`,
+    `/aircraft/${plane.slug}/`,
+    plane.image,
+    plane.imageAlt,
+  );
 }
 export default async function Page({
   params,
@@ -40,7 +45,8 @@ export default async function Page({
           <Link href="/aircraft/" className="breadcrumb">
             ← Aircraft & display teams
           </Link>
-          <span className="eyebrow" style={{ color: "#efb398" }}>
+          <span className="event-tag tag-airfield">
+            <Icon name="plane" />
             {plane.category} ·{" "}
             {plane.kind === "team" ? "DISPLAY TEAM" : "AIRCRAFT"}
           </span>

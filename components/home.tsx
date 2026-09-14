@@ -55,9 +55,9 @@ export default function Home() {
             </Button>
           </form>
           <div className="hero-suggestions">
-            <Link href="/calendar/?category=Warbirds">Warbirds</Link>
-            <Link href="/calendar/?admission=Free">Free entry</Link>
-            <Link href="/aircraft/red-arrows/">Red Arrows</Link>
+            <Link className="event-tag tag-ticket" href="/calendar/?category=Warbirds"><Icon name="plane" />Warbirds</Link>
+            <Link className="event-tag tag-free" href="/calendar/?admission=Free"><Icon name="check" />Free entry</Link>
+            <Link className="event-tag tag-red" href="/aircraft/red-arrows/"><Icon name="plane" />Red Arrows</Link>
           </div>
         </div>
         <figure className="flight-frame">

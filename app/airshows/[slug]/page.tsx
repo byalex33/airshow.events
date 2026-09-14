@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { pageMetadata } from "@/lib/metadata";
 import { notFound } from "next/navigation";
 import { aircraft, appearances, dateLabel, events } from "@/lib/content";
 import {
@@ -20,10 +21,14 @@ export async function generateMetadata({
 }) {
   const { slug } = await params;
   const event = events.find((e) => e.slug === slug);
-  return {
-    title: event?.name ?? "Airshow not found",
-    description: event?.description,
-  };
+  if (!event) notFound();
+  return pageMetadata(
+    event.name,
+    `${dateLabel(event)} ${event.start.slice(0, 4)} in ${event.location}. Organiser-sourced dates, travel information and recorded aircraft programmes.`,
+    `/airshows/${event.slug}/`,
+    event.image,
+    event.imageAlt,
+  );
 }
 export default async function Page({
   params,
@@ -66,28 +71,32 @@ export default async function Page({
             <p><a href={event.sourceUrl} target="_blank" rel="noreferrer">Official date source ↗</a> · Checked {event.checkedAt}</p>
             <p>Photography is representative and does not confirm aircraft attendance.</p>
             <h2>Aircraft on the programme</h2>
-            <p>
+            <p className="programme-note">
               {lineup.length ? "A partial record of the organiser’s published programme. For past events, this records planned participation, not proof that an aircraft flew." : "No aircraft confirmations recorded yet. See the organiser for the full programme."} Flying is subject to change.
             </p>
             {lineup.map((a) => {
               const plane = aircraft.find((p) => p.slug === a.aircraft)!;
               return (
-                <div className="lineup-row" key={a.aircraft}>
-                  <Link href={`/aircraft/${plane.slug}/`}>
-                    <img src={plane.image} alt={plane.imageAlt} />
+                <article className="programme-card" key={a.aircraft}>
+                  <Link className="programme-image" href={`/aircraft/${plane.slug}/`} aria-label={`View ${plane.name}`}>
+                    <img src={plane.image} alt={plane.imageAlt} loading="lazy" />
                   </Link>
-                  <div>
-                    <h3>
-                      <Link href={`/aircraft/${plane.slug}/`}>
-                        {plane.name}
-                      </Link>
-                    </h3>
+                  <div className="programme-content">
+                    <div className="programme-title">
+                      <h3>
+                        <Link href={`/aircraft/${plane.slug}/`}>
+                          {plane.name}
+                        </Link>
+                      </h3>
+                      <Status status={a.status} />
+                    </div>
                     <p>{a.details}</p>
-                    <a href={a.sourceUrl} target="_blank" rel="noreferrer">Programme source ↗</a>
-                    <p>Checked {a.checkedAt}</p>
+                    <div className="programme-footer">
+                      <a href={a.sourceUrl} target="_blank" rel="noreferrer">Programme source <Icon name="arrow" /></a>
+                      <span><Icon name="calendar" />Checked <time dateTime={a.checkedAt}>{new Date(`${a.checkedAt}T12:00:00Z`).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" })}</time></span>
+                    </div>
                   </div>
-                  <Status status={a.status} />
-                </div>
+                </article>
               );
             })}
             <h2>Getting there</h2>

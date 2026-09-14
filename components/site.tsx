@@ -105,6 +105,7 @@ export function Footer() {
       <div className="container footer-bottom">
         <span>© {new Date().getFullYear()} Airshow Events</span>
         <span>Independent. Made for the love of flight.</span>
+        <Link href="/contact/">Contact us</Link>
         <Link href="/about/">Sources & photo credits</Link>
       </div>
     </footer>
@@ -125,7 +126,7 @@ export function DataNotice() {
 export function Status({ status }: { status: EventStatus }) {
   return (
     <span className={`status ${status}`}>
-      <i />
+      <Icon name={{ confirmed: "check", provisional: "circle-alert", cancelled: "x", completed: "calendar" }[status]} />
       {status}
     </span>
   );
@@ -160,22 +161,27 @@ export function EventCard({
         <LiveStatus event={event} />
       </div>
       <div className="card-content">
-        <div className="card-date">
+        <div className="event-date-label">
           <Icon name="calendar" />
-          {dateLabel(event)} <span>{event.start.slice(0, 4)}</span>
+          <time dateTime={event.start}>{dateLabel(event)}</time>
+          <span className="event-date-year">{event.start.slice(0, 4) === event.end.slice(0, 4) ? event.start.slice(0, 4) : `${event.start.slice(0, 4)} / ${event.end.slice(0, 4)}`}</span>
         </div>
         <h3>
           <Link href={`/airshows/${event.slug}/`}>{event.name}</Link>
         </h3>
         <div className="event-tags">
-          <span className="event-tag">
+          <span className="event-tag tag-location">
             <Icon name="pin" />
             {event.location}
           </span>
-          <span className="event-tag">
+          <span className={`event-tag ${event.admission === "Free" ? "tag-free" : "tag-ticket"}`}>
+            <Icon name={event.admission === "Free" ? "check" : "ticket"} />
             {event.admission === "Free" ? "Free entry" : event.admission}
           </span>
-          <span className="event-tag">{event.venue}</span>
+          <span className={`event-tag tag-${event.venue.toLowerCase()}`}>
+            <Icon name={{ Airfield: "plane", Seafront: "waves", Estate: "house" }[event.venue]} />
+            {event.venue}
+          </span>
         </div>
         <div className="card-bottom">
           <span>
@@ -194,7 +200,7 @@ export function AircraftCard({ slug }: { slug: string }) {
     <Link className="aircraft-card" href={`/aircraft/${plane.slug}/`}>
       <img src={plane.image} alt={plane.imageAlt} loading="lazy" />
       <div>
-        <span className="eyebrow">{plane.category}</span>
+        <span className="event-tag tag-airfield"><Icon name="plane" />{plane.category}</span>
         <h3>{plane.name}</h3>
         <p>
           <span>
