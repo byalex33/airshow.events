@@ -11,6 +11,8 @@ npm run dev
 
 ## Verify and build
 
+Production is hosted on Vercel at https://airshow.events, with www.airshow.events also attached. The Vercel project `airshow-events` is connected to `byalex33/airshow.events` on GitHub. Use Vercel for future deployments; `.openai/hosting.json` retains the original Sites preview reference.
+
 ```sh
 npm test
 npm run typecheck
