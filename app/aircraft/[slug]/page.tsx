@@ -1,0 +1,85 @@
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { aircraft, appearances, events } from "@/lib/content";
+import { DemoNotice, EventCard, ExportButton, Status } from "@/components/site";
+export function generateStaticParams() {
+  return aircraft.map((a) => ({ slug: a.slug }));
+}
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
+  const { slug } = await params;
+  const plane = aircraft.find((a) => a.slug === slug);
+  return {
+    title: plane?.name ?? "Aircraft not found",
+    description: plane?.description,
+  };
+}
+export default async function Page({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
+  const { slug } = await params;
+  const plane = aircraft.find((a) => a.slug === slug);
+  if (!plane) notFound();
+  const bookings = appearances
+    .filter((a) => a.aircraft === slug)
+    .sort((a, b) =>
+      events
+        .find((e) => e.slug === a.event)!
+        .start.localeCompare(events.find((e) => e.slug === b.event)!.start),
+    );
+  return (
+    <main id="main">
+      <section className="detail-hero">
+        <img src={plane.image} alt={plane.imageAlt} fetchPriority="high" />
+        <div className="container detail-hero-content">
+          <Link href="/aircraft/" className="breadcrumb">
+            ← Aircraft & display teams
+          </Link>
+          <span className="eyebrow" style={{ color: "#efb398" }}>
+            {plane.category} ·{" "}
+            {plane.kind === "team" ? "DISPLAY TEAM" : "AIRCRAFT"}
+          </span>
+          <h1>{plane.name}</h1>
+          <p style={{ color: "#d6e1e6" }}>{plane.operator}</p>
+        </div>
+      </section>
+      <div className="container page-main">
+        <DemoNotice />
+        <div className="aircraft-intro">
+          <p>{plane.description}</p>
+          <ExportButton
+            source={events.filter((e) =>
+              bookings.some((b) => b.event === e.slug),
+            )}
+            label="Export appearances"
+          />
+        </div>
+        <div className="section-heading">
+          <div>
+            <span className="eyebrow">FOLLOW THEIR SEASON</span>
+            <h2>Where to see them.</h2>
+            <p>
+              All {bookings.length} example appearances, including provisional
+              and past dates.
+            </p>
+          </div>
+        </div>
+        <div className="card-grid">
+          {bookings.map((a) => (
+            <div key={a.event}>
+              <div style={{ marginBottom: 10, fontSize: 11, color: "#67747c" }}>
+                Aircraft appearance: <Status status={a.status} />
+              </div>
+              <EventCard event={events.find((e) => e.slug === a.event)!} />
+            </div>
+          ))}
+        </div>
+      </div>
+    </main>
+  );
+}
