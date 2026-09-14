@@ -22,9 +22,9 @@ export function ExperienceProvider({ children }: { children: ReactNode }) {
   return (
     <ThemeProvider
       attribute="class"
-      defaultTheme="light"
+      defaultTheme="dark"
       enableSystem={false}
-      storageKey="airshow-theme"
+      storageKey="airshow-theme-v2"
     >
       <ToastContext.Provider value={showToast}>
         {children}

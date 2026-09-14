@@ -46,7 +46,7 @@ export function Brand() {
         </svg>
       </span>
       <span>
-        AIRSHOW<span className="brand-sub">EVENTS</span>
+        Airshow<span className="brand-sub"> Events</span>
       </span>
     </Link>
   );
@@ -69,13 +69,13 @@ export function Header() {
               className={path.startsWith("/calendar") ? "active" : ""}
               href="/calendar/"
             >
-              Airshow calendar
+              Calendar
             </Link>
             <Link
               className={path.startsWith("/aircraft") ? "active" : ""}
               href="/aircraft/"
             >
-              Aircraft & teams
+              Aircraft
             </Link>
           </nav>
           <div className="header-actions">

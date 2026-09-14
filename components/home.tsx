@@ -23,35 +23,22 @@ export default function Home() {
   const next = shows[0];
   return (
     <main id="main">
-      <section className="hero">
-        <img
-          className="hero-photo"
-          src="/images/red-arrows.jpg"
-          alt="Red Arrows banking together, leaving long white smoke trails"
-          fetchPriority="high"
-        />
-        <div className="hero-shade" />
-        <div className="radar" aria-hidden="true">
-          <span />
-          <i />
-        </div>
-        <div className="container hero-content">
+      <section className="flight-intro container">
+        <div className="flight-copy">
           <span className="eyebrow hero-kicker">
-            <span className="pulse-dot" /> YOUR NEXT GREAT DAY OUT, ABOVE.
+            UK AIRSHOWS / THE 2026 SEASON
           </span>
           <h1>
-            <TextReveal text="Less scrolling." stagger={0.06} />
+            <TextReveal text="A good day" stagger={0.06} />
             <TextReveal
-              text="More looking up."
+              text="to look up."
               delay={0.12}
               stagger={0.06}
               className="hero-reveal-line"
             />
           </h1>
           <p>
-            Chase the roar. Follow your favourites.
-            <br />
-            Find your next unforgettable UK airshow.
+            Find your next airshow. Follow the aircraft worth travelling for.
           </p>
           <form className="hero-search" action="/calendar/">
             <Icon name="search" />
@@ -64,32 +51,33 @@ export default function Home() {
               placeholder="Airshow, location or aircraft…"
             />
             <Button type="submit">
-              Explore airshows <Icon name="arrow" />
+              Explore <Icon name="arrow" />
             </Button>
           </form>
           <div className="hero-suggestions">
-            <span>ON YOUR RADAR</span>
-            <Link href="/calendar/?category=Warbirds">Warbirds ↗</Link>
-            <Link href="/calendar/?admission=Free">Free days out ↗</Link>
-            <Link href="/aircraft/red-arrows/">Red Arrows ↗</Link>
+            <Link href="/calendar/?category=Warbirds">Warbirds</Link>
+            <Link href="/calendar/?admission=Free">Free entry</Link>
+            <Link href="/aircraft/red-arrows/">Red Arrows</Link>
           </div>
         </div>
-        <div className="hero-caption">
-          <span>THE ART OF FORMATION</span>RAF Red Arrows · William Warby
-        </div>
-        <div className="hero-bottom container">
-          <span>
-            FIELD NOTES / UK <i /> A DIFFERENT KIND OF WEEKEND
-          </span>
-          <span>DISCOVER THE SEASON ↓</span>
-        </div>
+        <figure className="flight-frame">
+          <img
+            src="/images/red-arrows.jpg"
+            alt="Red Arrows banking together, leaving long white smoke trails"
+            fetchPriority="high"
+          />
+          <figcaption>
+            <span>01 / IN FORMATION</span>
+            <span>RAF Red Arrows · William Warby</span>
+          </figcaption>
+        </figure>
       </section>
       <div className="container">
         <DemoNotice />
         {next && (
           <section className="next-show">
             <div className="next-label">
-              <span className="eyebrow">NEXT ON THE HORIZON</span>
+              <span className="eyebrow">UP NEXT</span>
               <Countdown event={next} />
             </div>
             <div className="next-info">
@@ -112,14 +100,12 @@ export default function Home() {
         <section className="section upcoming-section">
           <div className="section-heading">
             <div>
-              <span className="eyebrow">MAKE A DAY OF IT</span>
               <TextReveal
                 as="h2"
-                text="Your next sky-high moment."
+                text="Upcoming airshows"
                 whileInView
                 stagger={0.045}
               />
-              <p>The big weekends. The hidden gems. A reason to get outside.</p>
             </div>
             <Link className="text-link" href="/calendar/">
               View full calendar <Icon name="arrow" />
@@ -135,24 +121,12 @@ export default function Home() {
       <section className="dispatch-section">
         <div className="container dispatch-grid">
           <div className="dispatch-intro">
-            <span className="eyebrow">FRESH FROM THE FLIGHTLINE</span>
-            <h2>
-              Look who’s
-              <br />
-              coming.
-            </h2>
-            <p>
-              The latest additions to the demo flying programmes. Your
-              favourites, one step closer.
-            </p>
+            <span className="eyebrow">THE FLIGHTLINE</span>
+            <h2>Recently confirmed</h2>
+            <p>The latest aircraft added to the demo flying programmes.</p>
             <Link className="text-link" href="/aircraft/">
               Explore aircraft & teams <Icon name="arrow" />
             </Link>
-            <div className="mini-radar" aria-hidden="true">
-              <i />
-              <b />
-              <span />
-            </div>
           </div>
           <div className="announcements">
             {appearances
