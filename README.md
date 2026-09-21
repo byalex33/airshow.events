@@ -23,7 +23,7 @@ The build runs as a Next.js application on Vercel. Use `npm start` to serve a pr
 
 ## Contact email
 
-Copy `.env.example` to `.env.local` and set `RESEND_API_KEY`, `CONTACT_FROM_EMAIL` and `CONTACT_TO_EMAIL`. Add the same variables to Vercel before deploying. Use a sender address on a domain verified in Resend. The form calls the [Resend email API](https://resend.com/docs/api-reference/emails/send-email) from a Server Action and sets the visitor's email as Reply-To. Keys are never exposed to the browser. Missing configuration and delivery failures return an error without clearing the form.
+Copy the placeholder template with `cp .env.example .env.local` and set `RESEND_API_KEY`, `CONTACT_FROM_EMAIL` and `CONTACT_TO_EMAIL`. The template also lists the collector variables described below. Replace the placeholders for each service you use, and keep real credentials out of the tracked template. `.env.local` and other real environment files are ignored by Git. Add the same variables to Vercel before deploying. Use a sender address on a domain verified in Resend. The form calls the [Resend email API](https://resend.com/docs/api-reference/emails/send-email) from a Server Action and sets the visitor's email as Reply-To. Keys are never exposed to the browser. Missing configuration and delivery failures return an error without clearing the form.
 
 The missing-event toast appears after eight seconds, once per tab session, and stays until dismissed. It is hidden on the contact page. The form includes a honeypot for basic spam filtering; configure Vercel Firewall rate limits for the contact page's POST requests before public launch.
 
