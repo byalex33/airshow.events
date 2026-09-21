@@ -35,7 +35,7 @@ for (const harvestOnly of [true, false]) {
     assert.deepEqual(result.collection?.succeeded, [urls[0]]);
     assert.equal(result.collection?.failed[0].url, urls[1]);
     assert.deepEqual(saved().lastCollection, result.collection);
-    assert.deepEqual(saved().pages[urls[1]], state.pages[urls[1]]);
+    assert.deepEqual(saved().pages[urls[1]], { ...state.pages[urls[1]], sourceKind: "recurring" });
     assert.notEqual(saved().pages[urls[0]].hash, "previous");
     assert.match(saved().lastError, /1 of 2/);
     assert.equal(saved().batch, undefined);
@@ -49,7 +49,7 @@ for (const missing of [false, true]) {
     t.mock.method(globalThis, "fetch", async () => Response.json({ status: "completed", data: missing ? [] : urls.map(url => ({ ...valid(url), json: null })) }));
     const result = await runHostedMonitor(true, storage);
     assert.equal(result.status, "failed");
-    assert.deepEqual(saved().pages, state.pages);
+    assert.deepEqual(saved().pages, Object.fromEntries(Object.entries(state.pages).map(([url, page]) => [url, { ...page, sourceKind: "recurring" }])));
     assert.deepEqual(saved().lastCollection.succeeded, []);
     assert.deepEqual(saved().lastCollection.failed.map((failure: { url: string }) => failure.url), urls);
     assert.match(saved().lastError, /2 of 2/);

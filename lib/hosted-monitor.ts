@@ -7,9 +7,23 @@ import { extractEvents } from "../scripts/check-jsonld";
 
 const options = { access: "private" as const, addRandomSuffix: false, contentType: "application/json" };
 type EventDates = { startDate: string; endDate: string };
-type Page = { checkedAt: string; programmes: Programme[]; eventDates?: EventDates[]; hash?: string };
+type SourceKind = "edition" | "recurring";
+type Page = { sourceKind?: SourceKind; checkedAt: string; programmes: Programme[]; eventDates?: EventDates[]; hash?: string };
 type Collection = { batchId: string; completedAt: string; succeeded: string[]; failed: { url: string; error: string }[] };
 type State = { mappedAt?: string; urls: string[]; pages: Record<string, Page>; batch?: { id: string; urls: string[]; startedAt: string }; lastError?: string; lastCollection?: Collection };
+// Only reviewed, edition-specific official URLs may stop polling. Reused landing
+// pages and newly discovered URLs remain recurring, even when their dates are past.
+const editionSources = new Set([
+  "https://www.shuttleworth.org/about/about-shuttleworth/news/2026-air-shows-announced",
+  "https://www.shuttleworth.org/events/race-day-air-show-2026",
+  "https://www.shuttleworth.org/about/about-shuttleworth/news/2027-air-show-season-now-on-sale",
+  "https://www.iwm.org.uk/sites/default/files/files/2025-12/Press%20release%20-%20IWM%202026%20Programme%20Launch.pdf",
+  "https://www.south-ayrshire.gov.uk/council-news/International-Ayr-Show-Festival-of-Flight-2026-full-flying-display-schedule-announced",
+  "https://www.south-ayrshire.gov.uk/council-news/Save-the-date-The-International-Ayr-Show-Festival-of-Flight-returns-in-2027",
+]);
+function sourceKind(url?: string): SourceKind {
+  return url && editionSources.has(url) ? "edition" : "recurring";
+}
 class FirecrawlHttpError extends Error {
   constructor(readonly status: number) {
     super(`Firecrawl HTTP ${status}`);
@@ -37,6 +51,8 @@ export function pageDue(page: Page | undefined, now = new Date(), sourceUrl?: st
     ...(page.eventDates ?? []),
     ...knownEvents.map(event => ({ startDate: event.start, endDate: event.end })),
   ];
+  const kind = sourceUrl ? sourceKind(sourceUrl) : page.sourceKind;
+  if (kind === "edition" && dates.length > 0 && dates.every(event => event.endDate < today)) return false;
   const near = dates.some(event => event.endDate >= today && Date.parse(event.startDate) - Date.parse(today) <= 7 * 86400000);
   // Compare UTC calendar days so webhook latency cannot postpone the next 07:00 UTC run.
   const checkedDay = Math.floor(Date.parse(page.checkedAt) / 86400000);
@@ -60,6 +76,7 @@ export async function runHostedMonitor(harvestOnly = false, storage = { get, put
     const stored = await get("monitor/state.json", { access: "private", useCache: false });
     state = stored ? await new Response(stored.stream).json() : { urls: [], pages: {} };
     if (!state) throw new Error("Missing monitor state");
+    for (const [url, page] of Object.entries(state.pages)) page.sourceKind = sourceKind(url);
     if (state.batch) {
       const pending = state.batch;
       const currentState = state;
@@ -106,7 +123,7 @@ export async function runHostedMonitor(harvestOnly = false, storage = { get, put
               const imageCandidates = (Array.isArray(data.images) ? data.images : []).filter((value: unknown) => typeof value === "string" && /^https:\/\//.test(value)).slice(0, 100);
               await put(`monitor/reviews/${id}-${Date.now()}.json`, JSON.stringify({ sourceUrl: url, checkedAt, requiresReview: true, before: state.pages[url]?.programmes ?? null, after: programmeReview(programmes, url), eventCandidates, imageCandidates, markdown: data.markdown }), options);
             }
-            state.pages[url] = { checkedAt, programmes, eventDates, hash };
+            state.pages[url] = { sourceKind: sourceKind(url), checkedAt, programmes, eventDates, hash };
             succeeded.add(url);
             failures.delete(url);
           } catch (error) {
