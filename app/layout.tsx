@@ -11,6 +11,7 @@ export const metadata: Metadata = {
     template: "%s | Airshow Events",
   },
   description: siteDescription,
+  robots: { index: true, follow: true, googleBot: { index: true, follow: true, "max-image-preview": "large", "max-snippet": -1, "max-video-preview": -1 } },
   icons: { icon: "/favicon.svg" },
 };
 export default function RootLayout({
