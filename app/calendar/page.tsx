@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import Calendar from "@/components/calendar";
 import { pageMetadata } from "@/lib/metadata";
 export const metadata = pageMetadata(
@@ -6,5 +7,9 @@ export const metadata = pageMetadata(
   "/calendar/",
 );
 export default function Page() {
-  return <Calendar />;
+  return (
+    <Suspense fallback={<main id="main" className="container page-main">Loading the airshow calendar…</main>}>
+      <Calendar />
+    </Suspense>
+  );
 }
