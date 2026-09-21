@@ -2,10 +2,9 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
+import styles from "./home-hero.module.css";
 import { TextReveal } from "@/components/beui/text-reveal";
 import {
-  Countdown,
-  DataNotice,
   EventCard,
   Icon,
   Status,
@@ -13,18 +12,16 @@ import {
 import {
   aircraft,
   appearances,
-  dateLabel,
   events,
   upcoming,
 } from "@/lib/content";
 export default function Home() {
   const [shows, setShows] = useState(() => upcoming());
   useEffect(() => setShows(upcoming()), []);
-  const next = shows[0];
   return (
     <main id="main">
-      <section className="flight-intro container">
-        <div className="flight-copy">
+      <section className={`flight-intro container ${styles.hero}`}>
+        <div className={`flight-copy ${styles.copy}`}>
           <span className="eyebrow hero-kicker">
             UK AIRSHOWS / 2026 & 2027
           </span>
@@ -60,43 +57,8 @@ export default function Home() {
             <Link className="event-tag tag-red" href="/aircraft/red-arrows/"><Icon name="plane" />Red Arrows</Link>
           </div>
         </div>
-        <figure className="flight-frame">
-          <img
-            src="/images/red-arrows.jpg"
-            alt="Red Arrows banking together, leaving long white smoke trails"
-            fetchPriority="high"
-          />
-          <figcaption>
-            <span>01 / IN FORMATION</span>
-            <span>RAF Red Arrows · William Warby</span>
-          </figcaption>
-        </figure>
       </section>
       <div className="container">
-        <DataNotice />
-        {next && (
-          <section className="next-show">
-            <div className="next-label">
-              <span className="eyebrow">UP NEXT</span>
-              <Countdown event={next} />
-            </div>
-            <div className="next-info">
-              <h2>{next.name}</h2>
-              <p>
-                <Icon name="calendar" />
-                {dateLabel(next)}
-                <span>·</span>
-                <Icon name="pin" />
-                {next.location}
-              </p>
-            </div>
-            <Button variant="outline" asChild>
-              <Link href={`/airshows/${next.slug}/`}>
-                View airshow <Icon name="arrow" />
-              </Link>
-            </Button>
-          </section>
-        )}
         <section className="section upcoming-section">
           <div className="section-heading">
             <div>
