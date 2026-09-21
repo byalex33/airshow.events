@@ -38,12 +38,9 @@ export function Brand() {
   return (
     <Link href="/" className="brand" aria-label="Airshow Events home">
       <span className="brand-mark" aria-hidden="true">
-        <svg viewBox="0 0 32 32">
-          <path
-            d="m16 3 3 10 10 7v3l-11-4v7l4 3v1l-6-2-6 2v-1l4-3v-7-0L3 23v-3l10-7z"
-            fill="currentColor"
-          />
-        </svg>
+        <span className="brand-plane">
+          {"    |    \n    |    \n---(o)---\n   / \\   "}
+        </span>
       </span>
       <span>
         Airshow<span className="brand-sub"> Events</span>
