@@ -27,7 +27,10 @@ export function pageDue(page: Page | undefined, now = new Date()) {
   if (!page) return true;
   const today = now.toLocaleDateString("en-CA", { timeZone: "Europe/London" });
   const near = page.programmes.some(p => p.eventEnd >= today && Date.parse(p.eventStart) - Date.parse(today) <= 7 * 86400000);
-  return now.getTime() - Date.parse(page.checkedAt) >= (near ? 1 : 7) * 86400000;
+  // Compare UTC calendar days so webhook latency cannot postpone the next 07:00 UTC run.
+  const checkedDay = Math.floor(Date.parse(page.checkedAt) / 86400000);
+  const currentDay = Math.floor(now.getTime() / 86400000);
+  return currentDay - checkedDay >= (near ? 1 : 7);
 }
 export async function runHostedMonitor(harvestOnly = false, storage = { get, put }) {
   const { get, put } = storage;
