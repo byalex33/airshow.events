@@ -3,8 +3,8 @@ import { useEffect, useRef } from "react";
 import Link from "next/link";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
-import { dateLabel, type Airshow } from "@/lib/content";
-import { groupEventsByCoordinates } from "@/lib/event-map";
+import type { Airshow } from "@/lib/content";
+import { groupEventsByCoordinates, mapDateLabel, mapMarkerLabel } from "@/lib/event-map";
 export default function EventMap({ events }: { events: Airshow[] }) {
   const element = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -29,13 +29,11 @@ export default function EventMap({ events }: { events: Airshow[] }) {
         const name = document.createElement("strong");
         name.textContent = event.name;
         const date = document.createElement("span");
-        date.textContent = dateLabel(event);
+        date.textContent = mapDateLabel(event);
         link.append(name, date);
         popup.append(link);
       }
-      const label = group.events.length === 1
-        ? group.events[0].name
-        : `${group.events[0].location}: ${group.events.length} events`;
+      const label = mapMarkerLabel(group.events);
       const marker = L.marker(group.coordinates, {
         title: label,
         icon: L.divIcon({
@@ -67,7 +65,7 @@ export default function EventMap({ events }: { events: Airshow[] }) {
           <Link key={e.slug} href={`/airshows/${e.slug}/`}>
             <strong>{e.name}</strong>
             <span>{e.location}</span>
-            <small>{dateLabel(e)}</small>
+            <small>{mapDateLabel(e)}</small>
           </Link>
         ))}
       </aside>
