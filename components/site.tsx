@@ -3,7 +3,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { AirshowSearch, useToast } from "@/components/experience";
+import { useToast } from "@/components/experience";
 import { ThemeToggle } from "@/components/beui/theme-toggle";
 import { NumberTicker } from "@/components/beui/number-ticker";
 import {
@@ -76,7 +76,6 @@ export function Header() {
             </Link>
           </nav>
           <div className="header-actions">
-            <AirshowSearch />
             <ThemeToggle
               variant="circle-blur"
               start="top-right"

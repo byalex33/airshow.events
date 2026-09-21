@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { ThemeProvider } from "next-themes";
 import { createContext, useContext, useEffect, useRef, type ReactNode } from "react";
 import {
@@ -9,9 +9,7 @@ import {
   type ToastInput,
 } from "@/components/beui/animated-toast-stack";
 import { Dock, DockItem } from "@/components/beui/dock";
-import { MorphingSearch } from "@/components/beui/morphing-search";
 import { Home, Calendar, Aircraft } from "@/components/beui/icons";
-import { aircraft, events } from "@/lib/content";
 const ToastContext = createContext<(toast: ToastInput) => void>(() => {});
 export const useToast = () => useContext(ToastContext);
 export function ExperienceProvider({ children }: { children: ReactNode }) {
@@ -66,35 +64,6 @@ export function ExperienceProvider({ children }: { children: ReactNode }) {
         />
       </ToastContext.Provider>
     </ThemeProvider>
-  );
-}
-export function AirshowSearch() {
-  const router = useRouter();
-  const items = [
-    ...events.map((event) => ({
-      id: `event-${event.slug}`,
-      title: event.name,
-      description: event.location,
-      keywords: [event.region, event.venue],
-      icon: Calendar,
-      onSelect: () => router.push(`/airshows/${event.slug}/`),
-    })),
-    ...aircraft.map((plane) => ({
-      id: `aircraft-${plane.slug}`,
-      title: plane.name,
-      description: plane.category,
-      icon: Aircraft,
-      onSelect: () => router.push(`/aircraft/${plane.slug}/`),
-    })),
-  ];
-  return (
-    <MorphingSearch
-      items={items}
-      iconOnly
-      placeholder="Search airshows and aircraft"
-      emptyMessage="No matches. Try a place, airshow or aircraft name."
-      className="global-search"
-    />
   );
 }
 export function MobileDock() {
