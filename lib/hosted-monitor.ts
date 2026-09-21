@@ -7,8 +7,23 @@ import { extractEvents } from "../scripts/check-jsonld";
 
 const options = { access: "private" as const, addRandomSuffix: false, contentType: "application/json" };
 type EventDates = { startDate: string; endDate: string };
-type Page = { checkedAt: string; programmes: Programme[]; eventDates?: EventDates[]; hash?: string };
-type State = { mappedAt?: string; urls: string[]; pages: Record<string, Page>; batch?: { id: string; urls: string[]; startedAt: string }; lastError?: string };
+type SourceKind = "edition" | "recurring";
+type Page = { sourceKind?: SourceKind; checkedAt: string; programmes: Programme[]; eventDates?: EventDates[]; hash?: string };
+type Collection = { batchId: string; completedAt: string; succeeded: string[]; failed: { url: string; error: string }[] };
+type State = { mappedAt?: string; urls: string[]; pages: Record<string, Page>; batch?: { id: string; urls: string[]; startedAt: string }; lastError?: string; lastCollection?: Collection };
+// Only reviewed, edition-specific official URLs may stop polling. Reused landing
+// pages and newly discovered URLs remain recurring, even when their dates are past.
+const editionSources = new Set([
+  "https://www.shuttleworth.org/about/about-shuttleworth/news/2026-air-shows-announced",
+  "https://www.shuttleworth.org/events/race-day-air-show-2026",
+  "https://www.shuttleworth.org/about/about-shuttleworth/news/2027-air-show-season-now-on-sale",
+  "https://www.iwm.org.uk/sites/default/files/files/2025-12/Press%20release%20-%20IWM%202026%20Programme%20Launch.pdf",
+  "https://www.south-ayrshire.gov.uk/council-news/International-Ayr-Show-Festival-of-Flight-2026-full-flying-display-schedule-announced",
+  "https://www.south-ayrshire.gov.uk/council-news/Save-the-date-The-International-Ayr-Show-Festival-of-Flight-returns-in-2027",
+]);
+function sourceKind(url?: string): SourceKind {
+  return url && editionSources.has(url) ? "edition" : "recurring";
+}
 class FirecrawlHttpError extends Error {
   constructor(readonly status: number) {
     super(`Firecrawl HTTP ${status}`);
@@ -36,6 +51,8 @@ export function pageDue(page: Page | undefined, now = new Date(), sourceUrl?: st
     ...(page.eventDates ?? []),
     ...knownEvents.map(event => ({ startDate: event.start, endDate: event.end })),
   ];
+  const kind = sourceUrl ? sourceKind(sourceUrl) : page.sourceKind;
+  if (kind === "edition" && dates.length > 0 && dates.every(event => event.endDate < today)) return false;
   const near = dates.some(event => event.endDate >= today && Date.parse(event.startDate) - Date.parse(today) <= 7 * 86400000);
   // Compare UTC calendar days so webhook latency cannot postpone the next 07:00 UTC run.
   const checkedDay = Math.floor(Date.parse(page.checkedAt) / 86400000);
@@ -59,6 +76,7 @@ export async function runHostedMonitor(harvestOnly = false, storage = { get, put
     const stored = await get("monitor/state.json", { access: "private", useCache: false });
     state = stored ? await new Response(stored.stream).json() : { urls: [], pages: {} };
     if (!state) throw new Error("Missing monitor state");
+    for (const [url, page] of Object.entries(state.pages)) page.sourceKind = sourceKind(url);
     if (state.batch) {
       const pending = state.batch;
       const currentState = state;
@@ -83,12 +101,15 @@ export async function runHostedMonitor(harvestOnly = false, storage = { get, put
         delete state.batch;
         throw new Error("Firecrawl batch failed; previous programmes preserved");
       }
+      const requested = new Set(pending.urls);
+      const succeeded = new Set<string>();
+      const failures = new Map<string, string>();
       let page = batch;
       let pageCount = 0;
       do {
         for (const data of page.data ?? []) {
-          const url = data.metadata?.sourceURL;
-          if (!state.batch.urls.includes(url)) continue;
+          const url = data?.metadata?.sourceURL;
+          if (!requested.has(url) || succeeded.has(url)) continue;
           try {
             if (typeof data.markdown !== "string" || data.metadata?.statusCode >= 400) throw new Error("Unusable source content");
             const programmes = validateProgrammes(data.json, data.markdown);
@@ -102,9 +123,11 @@ export async function runHostedMonitor(harvestOnly = false, storage = { get, put
               const imageCandidates = (Array.isArray(data.images) ? data.images : []).filter((value: unknown) => typeof value === "string" && /^https:\/\//.test(value)).slice(0, 100);
               await put(`monitor/reviews/${id}-${Date.now()}.json`, JSON.stringify({ sourceUrl: url, checkedAt, requiresReview: true, before: state.pages[url]?.programmes ?? null, after: programmeReview(programmes, url), eventCandidates, imageCandidates, markdown: data.markdown }), options);
             }
-            state.pages[url] = { checkedAt, programmes, eventDates, hash };
+            state.pages[url] = { sourceKind: sourceKind(url), checkedAt, programmes, eventDates, hash };
+            succeeded.add(url);
+            failures.delete(url);
           } catch (error) {
-            await put(`monitor/failures/${Date.now()}-${createHash("sha256").update(url).digest("hex").slice(0, 12)}.json`, JSON.stringify({ url, error: error instanceof Error ? error.message : "Invalid extraction" }), options);
+            failures.set(url, error instanceof Error ? error.message : "Invalid extraction");
           }
         }
         if (!page.next) break;
@@ -112,8 +135,25 @@ export async function runHostedMonitor(harvestOnly = false, storage = { get, put
         if (next.origin !== "https://api.firecrawl.dev" || next.pathname !== `/v2/batch/scrape/${state.batch.id}` || ++pageCount > 50) throw new Error("Unexpected batch pagination");
         page = await readBatch(next.pathname.slice(4) + next.search);
       } while (true);
-      await put(`monitor/batches/${state.batch.id}.json`, JSON.stringify({ ...state.batch, completedAt: new Date().toISOString(), total: batch.total, completed: batch.completed }), { ...options, allowOverwrite: true });
+      for (const url of requested) {
+        if (!succeeded.has(url) && !failures.has(url)) failures.set(url, "Requested URL missing from completed batch");
+      }
+      const collection: Collection = {
+        batchId: pending.id, completedAt: new Date().toISOString(), succeeded: [...succeeded],
+        failed: [...failures].map(([url, error]) => ({ url, error })),
+      };
+      for (const failure of collection.failed) {
+        await put(`monitor/failures/${Date.now()}-${createHash("sha256").update(failure.url).digest("hex").slice(0, 12)}.json`, JSON.stringify({ batchId: pending.id, ...failure }), options);
+      }
+      await put(`monitor/batches/${pending.id}.json`, JSON.stringify({ ...pending, ...collection, total: batch.total, completed: batch.completed }), { ...options, allowOverwrite: true });
+      state.lastCollection = collection;
       delete state.batch;
+      if (collection.failed.length) {
+        state.lastError = `${collection.failed.length} of ${requested.size} requested URLs failed collection; previous snapshots preserved`;
+        return { status: succeeded.size ? "partial" : "failed", collection };
+      }
+      delete state.lastError;
+      if (harvestOnly) return { status: "collected", collection };
     }
     if (harvestOnly) return { status: "collected" };
     if (!state.mappedAt || Date.now() - Date.parse(state.mappedAt) >= 7 * 86400000) {
@@ -131,7 +171,6 @@ export async function runHostedMonitor(harvestOnly = false, storage = { get, put
     });
     if (typeof submitted.id !== "string") throw new Error("Missing batch identifier");
     state.batch = { id: submitted.id, urls: due, startedAt: new Date().toISOString() };
-    delete state.lastError;
     return { status: "submitted", pages: due.length };
   } catch (error) {
     if (state) state.lastError = error instanceof Error ? error.message : "Monitor failed";

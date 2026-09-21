@@ -7,7 +7,7 @@ const sourceUrl = "https://example.com/airshow";
 function fixture() {
   const state = {
     mappedAt: new Date().toISOString(), urls: [sourceUrl],
-    pages: { [sourceUrl]: { checkedAt: "2020-01-01T00:00:00Z", programmes: [], hash: "previous-snapshot" } },
+    pages: { [sourceUrl]: { sourceKind: "recurring", checkedAt: "2020-01-01T00:00:00Z", programmes: [], hash: "previous-snapshot" } },
     batch: { id: "expired-job", urls: [sourceUrl], startedAt: "2020-01-01T00:00:00Z" },
   };
   const blobs = new Map<string, string>([["monitor/state.json", JSON.stringify(state)]]);
