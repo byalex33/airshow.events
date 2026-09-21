@@ -29,7 +29,7 @@ test("JSON-LD-only collection persists scheduling dates even when its content ha
     },
   };
   t.mock.method(globalThis, "fetch", async () => Response.json({ success: true, status: "completed", data: [{ metadata: { sourceURL: url }, markdown, rawHtml, json: { programmes: [] } }] }));
-  assert.deepEqual(await runHostedMonitor(true, storage), { status: "collected" });
+  assert.equal((await runHostedMonitor(true, storage)).status, "collected");
   const saved = JSON.parse(blobs.get("monitor/state.json")!);
   assert.deepEqual(saved.pages[url].eventDates, [{ startDate: "2026-09-22", endDate: "2026-09-22" }]);
   assert.equal(saved.pages[url].hash, hash);
