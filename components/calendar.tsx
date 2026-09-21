@@ -1,7 +1,8 @@
 "use client";
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { useEffect, useMemo } from "react";
 import { flushSync } from "react-dom";
 import {
   Tabs,
@@ -44,12 +45,9 @@ type ModelContext = {
   ) => void | Promise<void>;
 };
 export default function Calendar() {
-  const [filters, setFilters] = useState<Filters>(emptyFilters);
-  const [view, setView] = useState("cards");
-  const [loaded, setLoaded] = useState(false);
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    setFilters({
+  const params = useSearchParams();
+  const filters = useMemo<Filters>(
+    () => ({
       ...emptyFilters,
       ...Object.fromEntries(
         Object.keys(emptyFilters).map((key) => [
@@ -57,23 +55,39 @@ export default function Calendar() {
           params.get(key === "query" ? "q" : key) || "",
         ]),
       ),
-    });
-    const display = params.get("view");
-    if (display && ["cards", "list", "map"].includes(display)) setView(display);
-    setLoaded(true);
-  }, []);
-  useEffect(() => {
-    if (!loaded) return;
-    const params = new URLSearchParams();
-    for (const [key, value] of Object.entries(filters))
-      if (value) params.set(key === "query" ? "q" : key, value);
-    if (view !== "cards") params.set("view", view);
+    }),
+    [params],
+  );
+  const display = params.get("view");
+  const view = display && ["cards", "list", "map"].includes(display)
+    ? display
+    : "cards";
+
+  // The URL is the source of truth for links, history and local edits.
+  // Writing only from user actions avoids effects overwriting navigation.
+  function replaceParams(next: URLSearchParams) {
+    const query = next.toString();
     window.history.replaceState(
       null,
       "",
-      `${window.location.pathname}${params.size ? "?" + params.toString() : ""}`,
+      `${window.location.pathname}${query ? "?" + query : ""}${window.location.hash}`,
     );
-  }, [filters, view, loaded]);
+  }
+  function setFilters(next: Filters) {
+    const params = new URLSearchParams(window.location.search);
+    for (const [key, value] of Object.entries(next)) {
+      const param = key === "query" ? "q" : key;
+      if (value) params.set(param, value);
+      else params.delete(param);
+    }
+    replaceParams(params);
+  }
+  function setView(next: string) {
+    const params = new URLSearchParams(window.location.search);
+    if (next === "cards") params.delete("view");
+    else params.set("view", next);
+    replaceParams(params);
+  }
   const results = useMemo(() => filterEvents(filters, events), [filters]);
   const active = Object.values(filters).filter(Boolean).length;
   useEffect(() => {
