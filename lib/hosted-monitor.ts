@@ -8,12 +8,17 @@ import { extractEvents } from "../scripts/check-jsonld";
 const options = { access: "private" as const, addRandomSuffix: false, contentType: "application/json" };
 type Page = { checkedAt: string; programmes: Programme[]; hash?: string };
 type State = { mappedAt?: string; urls: string[]; pages: Record<string, Page>; batch?: { id: string; urls: string[]; startedAt: string }; lastError?: string };
+class FirecrawlHttpError extends Error {
+  constructor(readonly status: number) {
+    super(`Firecrawl HTTP ${status}`);
+  }
+}
 async function api(path: string, body?: object) {
   const response = await fetch(`https://api.firecrawl.dev/v2/${path}`, {
     method: body ? "POST" : "GET", headers: { Authorization: `Bearer ${process.env.FIRECRAWL_API_KEY}`, "Content-Type": "application/json" },
     body: body ? JSON.stringify(body) : undefined, signal: AbortSignal.timeout(45000), cache: "no-store",
   });
-  if (!response.ok) throw new Error(`Firecrawl HTTP ${response.status}`);
+  if (!response.ok) throw new FirecrawlHttpError(response.status);
   const result = await response.json();
   if (result.success === false) throw new Error("Firecrawl request unsuccessful");
   return result;
@@ -24,7 +29,8 @@ export function pageDue(page: Page | undefined, now = new Date()) {
   const near = page.programmes.some(p => p.eventEnd >= today && Date.parse(p.eventStart) - Date.parse(today) <= 7 * 86400000);
   return now.getTime() - Date.parse(page.checkedAt) >= (near ? 1 : 7) * 86400000;
 }
-export async function runHostedMonitor(harvestOnly = false) {
+export async function runHostedMonitor(harvestOnly = false, storage = { get, put }) {
+  const { get, put } = storage;
   // ponytail: one global lease serializes cron/webhook runs; a queue is needed if parallel ingestion becomes necessary.
   const lease = await get("monitor/lease.json", { access: "private", useCache: false });
   if (lease && (await new Response(lease.stream).json()).until > Date.now()) return { status: "busy" };
@@ -41,7 +47,22 @@ export async function runHostedMonitor(harvestOnly = false) {
     state = stored ? await new Response(stored.stream).json() : { urls: [], pages: {} };
     if (!state) throw new Error("Missing monitor state");
     if (state.batch) {
-      const batch = await api(`batch/scrape/${encodeURIComponent(state.batch.id)}`);
+      const pending = state.batch;
+      const currentState = state;
+      async function readBatch(path: string) {
+        try {
+          return await api(path);
+        } catch (error) {
+          // Missing or expired results cannot recover on a later poll. Archive before clearing.
+          if (error instanceof FirecrawlHttpError && [404, 410].includes(error.status)) {
+            await put(`monitor/failures/${Date.now()}.json`, JSON.stringify({ batch: pending, status: error.status, error: error.message }), options);
+            currentState.urls = [...new Set([...currentState.urls, ...pending.urls])];
+            delete currentState.batch;
+          }
+          throw error;
+        }
+      }
+      const batch = await readBatch(`batch/scrape/${encodeURIComponent(pending.id)}`);
       if (batch.status === "scraping") return { status: "scraping" };
       if (batch.status !== "completed") {
         const failed = state.batch;
@@ -75,7 +96,7 @@ export async function runHostedMonitor(harvestOnly = false) {
         if (!page.next) break;
         const next = new URL(page.next);
         if (next.origin !== "https://api.firecrawl.dev" || next.pathname !== `/v2/batch/scrape/${state.batch.id}` || ++pageCount > 50) throw new Error("Unexpected batch pagination");
-        page = await api(next.pathname.slice(4) + next.search);
+        page = await readBatch(next.pathname.slice(4) + next.search);
       } while (true);
       await put(`monitor/batches/${state.batch.id}.json`, JSON.stringify({ ...state.batch, completedAt: new Date().toISOString(), total: batch.total, completed: batch.completed }), { ...options, allowOverwrite: true });
       delete state.batch;
