@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { AsciiFormation } from "@/components/ascii-formation";
+import styles from "./home-hero.module.css";
 import { TextReveal } from "@/components/beui/text-reveal";
 import {
   EventCard,
@@ -20,8 +20,8 @@ export default function Home() {
   useEffect(() => setShows(upcoming()), []);
   return (
     <main id="main">
-      <section className="flight-intro container">
-        <div className="flight-copy">
+      <section className={`flight-intro container ${styles.hero}`}>
+        <div className={`flight-copy ${styles.copy}`}>
           <span className="eyebrow hero-kicker">
             UK AIRSHOWS / 2026 & 2027
           </span>
@@ -57,7 +57,6 @@ export default function Home() {
             <Link className="event-tag tag-red" href="/aircraft/red-arrows/"><Icon name="plane" />Red Arrows</Link>
           </div>
         </div>
-        <AsciiFormation />
       </section>
       <div className="container">
         <section className="section upcoming-section">
