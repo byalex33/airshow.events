@@ -1,13 +1,17 @@
-import { aircraft } from "@/lib/content";
+import { CatalogProvider } from "@/components/catalog-provider";
+import { getCatalog } from "@/lib/catalog";
+
 import { AircraftCard, DataNotice } from "@/components/site";
 import { pageMetadata } from "@/lib/metadata";
 export const metadata = pageMetadata(
   "Aircraft & display teams",
-  "Meet the Red Arrows, Spitfire and Typhoon. Explore the aircraft and browse their published UK programme records.",
+  "Explore aircraft and display teams from published UK airshow programmes, with participation status and organiser sources.",
   "/aircraft/",
 );
-export default function Page() {
+export default async function Page() {
+  const { aircraft, appearances } = await getCatalog();
   return (
+    <CatalogProvider catalog={{ aircraft, appearances }}>
     <main id="main" className="container page-main">
       <DataNotice />
       <div className="page-heading">
@@ -26,5 +30,6 @@ export default function Page() {
         ))}
       </div>
     </main>
+    </CatalogProvider>
   );
 }

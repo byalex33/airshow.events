@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import sitemap from "../app/sitemap";
+import { sitemapEntries } from "../lib/metadata";
 import { aircraft, events } from "../lib/content";
 import { pageMetadata, siteUrl } from "../lib/metadata";
 
@@ -14,11 +14,11 @@ test("every listing has its own canonical URL and matching social preview", () =
       assert.equal(metadata.openGraph?.title, `${listing.name} | Airshow Events`);
       assert.equal(metadata.twitter?.title, metadata.openGraph?.title);
       assert.deepEqual(metadata.twitter?.images, [{ url: listing.image, alt: listing.imageAlt }]);
-      assert(sitemap().some((entry) => entry.url === `${siteUrl}${path}`));
+      assert(sitemapEntries(aircraft).some((entry) => entry.url === `${siteUrl}${path}`));
     }
   }
   const homepage = pageMetadata("UK airshows & aircraft", "Demo season", "/");
   assert.deepEqual(homepage.openGraph?.images, homepage.twitter?.images);
   assert.equal((homepage.twitter as { card: string }).card, "summary_large_image");
-  assert.equal(new Set(sitemap().map((entry) => entry.url)).size, sitemap().length);
+  assert.equal(new Set(sitemapEntries(aircraft).map((entry) => entry.url)).size, sitemapEntries(aircraft).length);
 });

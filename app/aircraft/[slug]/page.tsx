@@ -1,16 +1,16 @@
+import { CatalogProvider } from "@/components/catalog-provider";
+import { getCatalog } from "@/lib/catalog";
 import Link from "next/link";
 import { pageMetadata } from "@/lib/metadata";
 import { notFound } from "next/navigation";
-import { aircraft, appearances, events } from "@/lib/content";
+import { events } from "@/lib/content";
 import { DataNotice, EventCard, ExportButton, Icon, Status } from "@/components/site";
-export function generateStaticParams() {
-  return aircraft.map((a) => ({ slug: a.slug }));
-}
 export async function generateMetadata({
   params,
 }: {
   params: Promise<{ slug: string }>;
 }) {
+  const { aircraft } = await getCatalog();
   const { slug } = await params;
   const plane = aircraft.find((a) => a.slug === slug);
   if (!plane) notFound();
@@ -27,6 +27,7 @@ export default async function Page({
 }: {
   params: Promise<{ slug: string }>;
 }) {
+  const { aircraft, appearances } = await getCatalog();
   const { slug } = await params;
   const plane = aircraft.find((a) => a.slug === slug);
   if (!plane) notFound();
@@ -38,6 +39,7 @@ export default async function Page({
         .start.localeCompare(events.find((e) => e.slug === b.event)!.start),
     );
   return (
+    <CatalogProvider catalog={{ aircraft, appearances }}>
     <main id="main">
       <section className="detail-hero">
         <img src={plane.image} alt={plane.imageAlt} fetchPriority="high" />
@@ -60,7 +62,7 @@ export default async function Page({
           <p>{plane.description}</p>
           <ExportButton
             source={events.filter((e) =>
-              bookings.some((b) => b.event === e.slug),
+              bookings.some((b) => b.event === e.slug && b.status !== "cancelled"),
             )}
             label="Export appearances"
           />
@@ -88,5 +90,6 @@ export default async function Page({
         </div>
       </div>
     </main>
+    </CatalogProvider>
   );
 }

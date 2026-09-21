@@ -1,3 +1,5 @@
+import { events, type Aircraft } from "./content";
+import type { MetadataRoute } from "next";
 import type { Metadata } from "next";
 
 export const siteUrl = "https://airshow.events";
@@ -28,4 +30,12 @@ export function pageMetadata(
     },
     twitter: { card: "summary_large_image", title: socialTitle, description, images },
   };
+}
+
+export function sitemapEntries(aircraft: Aircraft[]): MetadataRoute.Sitemap {
+  return [
+    "/", "/calendar/", "/aircraft/", "/about/", "/contact/",
+    ...events.map(event => `/airshows/${event.slug}/`),
+    ...aircraft.map(plane => `/aircraft/${plane.slug}/`),
+  ].map(path => ({ url: `${siteUrl}${path}` }));
 }

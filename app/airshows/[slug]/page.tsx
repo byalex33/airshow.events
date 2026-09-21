@@ -1,7 +1,9 @@
+import { CatalogProvider } from "@/components/catalog-provider";
+import { getCatalog } from "@/lib/catalog";
 import Link from "next/link";
 import { pageMetadata } from "@/lib/metadata";
 import { notFound } from "next/navigation";
-import { aircraft, appearances, dateLabel, events } from "@/lib/content";
+import { dateLabel, events } from "@/lib/content";
 import {
   Countdown,
   DataNotice,
@@ -35,11 +37,13 @@ export default async function Page({
 }: {
   params: Promise<{ slug: string }>;
 }) {
+  const { aircraft, appearances } = await getCatalog();
   const { slug } = await params;
   const event = events.find((e) => e.slug === slug);
   if (!event) notFound();
   const lineup = appearances.filter((a) => a.event === slug);
   return (
+    <CatalogProvider catalog={{ aircraft, appearances }}>
     <main id="main">
       <section className="detail-hero">
         <img src={event.image} alt={event.imageAlt} fetchPriority="high" />
@@ -175,5 +179,6 @@ export default async function Page({
         </div>
       </div>
     </main>
+    </CatalogProvider>
   );
 }

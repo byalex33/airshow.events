@@ -1,4 +1,5 @@
 "use client";
+import { useCatalog } from "@/components/catalog-provider";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -7,8 +8,6 @@ import { useToast } from "@/components/experience";
 import { ThemeToggle } from "@/components/beui/theme-toggle";
 import { NumberTicker } from "@/components/beui/number-ticker";
 import {
-  aircraft,
-  appearances,
   calendarFile,
   dateLabel,
   eventStatus,
@@ -119,10 +118,10 @@ export function DataNotice() {
     </div>
   );
 }
-export function Status({ status }: { status: EventStatus }) {
+export function Status({ status }: { status: EventStatus | "unknown" }) {
   return (
     <span className={`status ${status}`}>
-      <Icon name={{ confirmed: "check", provisional: "circle-alert", cancelled: "x", completed: "calendar" }[status]} />
+      <Icon name={{ confirmed: "check", provisional: "circle-alert", cancelled: "x", completed: "calendar", unknown: "circle-alert" }[status]} />
       {status}
     </span>
   );
@@ -141,6 +140,7 @@ export function EventCard({
   event: Airshow;
   list?: boolean;
 }) {
+  const { appearances } = useCatalog();
   const count = appearances.filter(
     (a) => a.event === event.slug && a.status === "confirmed",
   ).length;
@@ -190,6 +190,7 @@ export function EventCard({
   );
 }
 export function AircraftCard({ slug }: { slug: string }) {
+  const { aircraft, appearances } = useCatalog();
   const plane = aircraft.find((a) => a.slug === slug)!;
   const count = appearances.filter((a) => a.aircraft === slug).length;
   return (

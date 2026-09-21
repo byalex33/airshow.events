@@ -1,7 +1,7 @@
 export type EventStatus =
   "confirmed" | "provisional" | "cancelled" | "completed";
 export type AircraftCategory =
-  "Warbirds" | "Fast jets" | "Display teams" | "Historic bombers";
+  "Warbirds" | "Fast jets" | "Display teams" | "Historic bombers" | "Other aircraft";
 export interface Aircraft {
   slug: string;
   name: string;
@@ -39,7 +39,7 @@ export interface Airshow {
 export interface Appearance {
   event: string;
   aircraft: string;
-  status: "confirmed" | "provisional";
+  status: "confirmed" | "provisional" | "cancelled" | "unknown";
   checkedAt: string;
   sourceUrl: string;
   details: string;
@@ -788,13 +788,14 @@ export const emptyFilters: Filters = {
   category: "",
   status: "",
 };
-export function filterEvents(filters: Filters, source = events, today = todayUK()) {
+export function filterEvents(filters: Filters, source = events, today = todayUK(), catalog = { aircraft, appearances }) {
+  const { aircraft, appearances } = catalog;
   return source
     .filter(
       (e) =>
         (!filters.query ||
           `${e.name} ${e.location} ${appearances
-            .filter((a) => a.event === e.slug)
+            .filter((a) => a.event === e.slug && a.status !== "cancelled")
             .map((a) => aircraft.find((p) => p.slug === a.aircraft)?.name)
             .join(" ")}`
             .toLowerCase()
@@ -809,7 +810,7 @@ export function filterEvents(filters: Filters, source = events, today = todayUK(
         (!filters.category ||
           appearances.some(
             (a) =>
-              a.event === e.slug &&
+              a.event === e.slug && a.status !== "cancelled" &&
               aircraft.find((p) => p.slug === a.aircraft)?.category ===
                 filters.category,
           )),
