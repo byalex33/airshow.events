@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 
 export const siteUrl = "https://airshow.events";
 export const siteDescription =
-  "Find your next UK airshow. Explore aircraft and display teams, browse the calendar, and plan your flying season. Demo listings and appearances.";
+  "Explore selected UK airshows and published aircraft line-ups, with links to official sources. Our growing calendar has partial coverage. Check organisers for updates.";
 
 export function pageMetadata(
   title: string,
