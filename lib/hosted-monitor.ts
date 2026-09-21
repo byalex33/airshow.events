@@ -6,7 +6,8 @@ import { sourceUrls } from "../scripts/check-britishairshows";
 import { extractEvents } from "../scripts/check-jsonld";
 
 const options = { access: "private" as const, addRandomSuffix: false, contentType: "application/json" };
-type Page = { checkedAt: string; programmes: Programme[]; hash?: string };
+type EventDates = { startDate: string; endDate: string };
+type Page = { checkedAt: string; programmes: Programme[]; eventDates?: EventDates[]; hash?: string };
 type State = { mappedAt?: string; urls: string[]; pages: Record<string, Page>; batch?: { id: string; urls: string[]; startedAt: string }; lastError?: string };
 class FirecrawlHttpError extends Error {
   constructor(readonly status: number) {
@@ -23,11 +24,23 @@ async function api(path: string, body?: object) {
   if (result.success === false) throw new Error("Firecrawl request unsuccessful");
   return result;
 }
-export function pageDue(page: Page | undefined, now = new Date()) {
+export function pageDue(page: Page | undefined, now = new Date(), sourceUrl?: string) {
   if (!page) return true;
   const today = now.toLocaleDateString("en-CA", { timeZone: "Europe/London" });
-  const near = page.programmes.some(p => p.eventEnd >= today && Date.parse(p.eventStart) - Date.parse(today) <= 7 * 86400000);
-  return now.getTime() - Date.parse(page.checkedAt) >= (near ? 1 : 7) * 86400000;
+  const knownEvents = sourceUrl ? events.filter(event =>
+    event.officialUrl === sourceUrl || event.sourceUrl === sourceUrl ||
+    appearances.some(appearance => appearance.sourceUrl === sourceUrl && appearance.event === event.slug)
+  ) : [];
+  const dates = [
+    ...page.programmes.map(p => ({ startDate: p.eventStart, endDate: p.eventEnd })),
+    ...(page.eventDates ?? []),
+    ...knownEvents.map(event => ({ startDate: event.start, endDate: event.end })),
+  ];
+  const near = dates.some(event => event.endDate >= today && Date.parse(event.startDate) - Date.parse(today) <= 7 * 86400000);
+  // Compare UTC calendar days so webhook latency cannot postpone the next 07:00 UTC run.
+  const checkedDay = Math.floor(Date.parse(page.checkedAt) / 86400000);
+  const currentDay = Math.floor(now.getTime() / 86400000);
+  return currentDay - checkedDay >= (near ? 1 : 7);
 }
 export async function runHostedMonitor(harvestOnly = false, storage = { get, put }) {
   const { get, put } = storage;
@@ -82,13 +95,14 @@ export async function runHostedMonitor(harvestOnly = false, storage = { get, put
             const checkedAt = new Date().toISOString();
             const id = createHash("sha256").update(url).digest("hex").slice(0, 20);
             const hash = createHash("sha256").update(JSON.stringify([programmes, data.markdown, data.images, data.rawHtml])).digest("hex");
+            let eventCandidates: ReturnType<typeof extractEvents>;
+            try { eventCandidates = extractEvents(data.rawHtml ?? ""); } catch { eventCandidates = []; }
+            const eventDates = eventCandidates.map(({ startDate, endDate }) => ({ startDate, endDate }));
             if (state.pages[url]?.hash !== hash) {
-              let eventCandidates: ReturnType<typeof extractEvents>;
-              try { eventCandidates = extractEvents(data.rawHtml ?? ""); } catch { eventCandidates = []; }
               const imageCandidates = (Array.isArray(data.images) ? data.images : []).filter((value: unknown) => typeof value === "string" && /^https:\/\//.test(value)).slice(0, 100);
               await put(`monitor/reviews/${id}-${Date.now()}.json`, JSON.stringify({ sourceUrl: url, checkedAt, requiresReview: true, before: state.pages[url]?.programmes ?? null, after: programmeReview(programmes, url), eventCandidates, imageCandidates, markdown: data.markdown }), options);
             }
-            state.pages[url] = { checkedAt, programmes, hash };
+            state.pages[url] = { checkedAt, programmes, eventDates, hash };
           } catch (error) {
             await put(`monitor/failures/${Date.now()}-${createHash("sha256").update(url).digest("hex").slice(0, 12)}.json`, JSON.stringify({ url, error: error instanceof Error ? error.message : "Invalid extraction" }), options);
           }
@@ -109,7 +123,7 @@ export async function runHostedMonitor(harvestOnly = false, storage = { get, put
       state.mappedAt = new Date().toISOString();
     }
     const pages = state.pages;
-    const due = state.urls.filter(url => pageDue(pages[url]));
+    const due = state.urls.filter(url => pageDue(pages[url], new Date(), url));
     if (!due.length) return { status: "up-to-date" };
     const submitted = await api("batch/scrape", {
       urls: due, formats: ["markdown", "rawHtml", "images", programmeFormat], onlyMainContent: false, maxAge: 0, maxConcurrency: 3,
