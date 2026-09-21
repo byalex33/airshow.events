@@ -1,0 +1,112 @@
+.frame {
+  min-width: 0;
+  margin: 0;
+  padding: 8px;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: var(--surface);
+}
+
+.sky {
+  position: relative;
+  height: 350px;
+  overflow: hidden;
+  border-radius: 13px;
+  background: radial-gradient(ellipse at 50% 25%, #f58b570c, transparent 70%);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+.coordinates {
+  position: absolute;
+  inset: 15px 14px auto;
+  display: flex;
+  justify-content: space-between;
+  color: var(--muted);
+  font-size: 9px;
+  letter-spacing: 0.08em;
+}
+
+.formation {
+  position: absolute;
+  inset: 45px 6% 20px;
+  animation: bank 12s ease-in-out infinite;
+}
+
+.aircraft {
+  position: absolute;
+  width: 66px;
+  transform: translateX(-50%);
+  color: var(--foreground);
+}
+
+.lead { left: 50%; top: 0; color: #f58b57; }
+.left { left: 29%; top: 58px; }
+.right { left: 71%; top: 58px; }
+.farLeft { left: 8%; top: 116px; }
+.farRight { left: 92%; top: 116px; }
+
+.plane,
+.trail {
+  margin: 0;
+  white-space: pre;
+  font: 9px/1.1 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  text-align: center;
+  letter-spacing: 0;
+}
+
+.trailWindow {
+  height: 150px;
+  overflow: hidden;
+  margin-top: 7px;
+  opacity: 0.35;
+  mask-image: linear-gradient(to bottom, black, transparent);
+}
+
+.trail {
+  line-height: 12px;
+  animation: smoke 1.8s linear infinite;
+}
+
+.left .trail, .farRight .trail { animation-delay: -0.6s; }
+.right .trail, .farLeft .trail { animation-delay: -1.2s; }
+
+.horizon {
+  position: absolute;
+  right: 0;
+  bottom: 14px;
+  left: 0;
+  color: var(--muted);
+  opacity: 0.4;
+  text-align: center;
+  font-size: 9px;
+  white-space: nowrap;
+}
+
+.caption {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 15px 7px 7px;
+  color: var(--muted);
+  font: 10px/1.5 ui-monospace, monospace;
+}
+
+@keyframes bank {
+  0%, 100% { transform: translateY(3px) rotate(-3deg); }
+  50% { transform: translateY(-3px) rotate(3deg); }
+}
+
+@keyframes smoke {
+  from { transform: translateY(-36px); }
+  to { transform: translateY(0); }
+}
+
+@media (max-width: 900px) {
+  .sky { height: 310px; }
+  .plane { font-size: 8px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .formation, .trail { animation: none; }
+}
