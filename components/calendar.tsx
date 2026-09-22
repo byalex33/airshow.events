@@ -162,7 +162,7 @@ export default function Calendar() {
     );
   }
   return (
-    <main id="main" className="container page-main">
+    <div className="container page-main">
       <DataNotice />
       <div className="page-heading">
         <div>
@@ -295,6 +295,6 @@ export default function Calendar() {
         Flying programmes can change. Calendar exports include upcoming events
         only.
       </p>
-    </main>
+    </div>
   );
 }

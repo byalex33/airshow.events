@@ -37,7 +37,7 @@ test("sourced content, filters, status rollover and calendar exports", () => {
   const fixture = { ...events[0], slug: "test-event", name: "Test event", start: "2026-09-19", end: "2026-09-20", status: "provisional" as const };
   assert.equal(eventStatus(fixture, "2026-09-21"), "completed");
   assert.equal(eventStatus({ ...fixture, status: "cancelled" }, "2027-01-01"), "cancelled");
-  assert.equal(upcoming("2026-09-14")[0].slug, "shuttleworth-season-finale");
+  assert.equal(upcoming("2026-09-14")[0].slug, "duxford-flying-finale-2026");
   assert.ok(upcoming("2027-01-01").some(e => e.start.startsWith("2027")));
   const now = new Date("2026-09-14T12:00:00Z");
   const ics = calendarFile([fixture, { ...fixture, name: "Cancelled", status: "cancelled" }, { ...fixture, name: "Past", end: "2026-09-13" }], now);

@@ -30,6 +30,7 @@ export interface Airshow {
   imageAlt: string;
   description: string;
   travel: string;
+  travelSourceUrl?: string;
   postcode: string;
   officialUrl: string;
   ticketUrl?: string;
@@ -687,6 +688,236 @@ export const events: Airshow[] = [
     "officialUrl": "https://englishrivieraairshow.co.uk/",
     "sourceUrl": "https://englishrivieraairshow.co.uk/about/",
     "checkedAt": "2026-09-14"
+  },
+  {
+    "slug": "duxford-summer-2027",
+    "name": "Duxford Summer Air Show",
+    "subtitle": "Duxford, Cambridgeshire",
+    "start": "2027-06-19",
+    "end": "2027-06-20",
+    "location": "Duxford, Cambridgeshire",
+    "region": "East of England",
+    "coordinates": [
+      52.09,
+      0.13
+    ],
+    "venue": "Airfield",
+    "admission": "Ticketed",
+    "status": "confirmed",
+    "image": "/images/events/duxford-summer.webp",
+    "imageAlt": "Representative photograph from a previous Duxford air show",
+    "imageSource": "https://www.iwm.org.uk/airshows/duxford-summer-air-show",
+    "imageCredit": "Imperial War Museums",
+    "description": "A two-day air show in IWM Duxford's announced 2027 season. Ticket sales and aircraft details were still to be announced when this date was checked.",
+    "travel": "Check IWM's event-specific arrival information before travelling. The museum is near Cambridge; parking and shuttle arrangements differ between flying events.",
+    "postcode": "CB22 4QR",
+    "officialUrl": "https://www.iwm.org.uk/airshows",
+    "sourceUrl": "https://www.iwm.org.uk/airshows",
+    "checkedAt": "2026-09-22"
+  },
+  {
+    "slug": "duxford-flying-evening-2027",
+    "name": "Duxford Flying Evening",
+    "subtitle": "Duxford, Cambridgeshire",
+    "start": "2027-08-14",
+    "end": "2027-08-14",
+    "location": "Duxford, Cambridgeshire",
+    "region": "East of England",
+    "coordinates": [
+      52.09,
+      0.13
+    ],
+    "venue": "Airfield",
+    "admission": "Ticketed",
+    "status": "confirmed",
+    "image": "/images/events/duxford-summer.webp",
+    "imageAlt": "Representative photograph from a previous Duxford air show",
+    "imageSource": "https://www.iwm.org.uk/airshows/duxford-summer-air-show",
+    "imageCredit": "Imperial War Museums",
+    "description": "An evening flying event in IWM Duxford's 2027 season. Check IWM for ticket releases, opening times and the flying programme.",
+    "travel": "Check IWM's event-specific arrival information before travelling. The museum is near Cambridge; parking and shuttle arrangements differ between flying events.",
+    "postcode": "CB22 4QR",
+    "officialUrl": "https://www.iwm.org.uk/airshows",
+    "sourceUrl": "https://www.iwm.org.uk/airshows",
+    "checkedAt": "2026-09-22"
+  },
+  {
+    "slug": "duxford-battle-of-britain-2027",
+    "name": "Duxford Battle of Britain Air Show",
+    "subtitle": "Duxford, Cambridgeshire",
+    "start": "2027-09-11",
+    "end": "2027-09-12",
+    "location": "Duxford, Cambridgeshire",
+    "region": "East of England",
+    "coordinates": [
+      52.09,
+      0.13
+    ],
+    "venue": "Airfield",
+    "admission": "Ticketed",
+    "status": "confirmed",
+    "image": "/images/events/duxford-battle-of-britain.webp",
+    "imageAlt": "Representative photograph from a previous Duxford air show",
+    "imageSource": "https://www.iwm.org.uk/airshows/duxford-battle-of-britain-airshow",
+    "imageCredit": "Imperial War Museums",
+    "description": "IWM has announced this September weekend for its 2027 Battle of Britain Air Show. Aircraft participation has not yet been recorded here.",
+    "travel": "Check IWM's event-specific arrival information before travelling. The museum is near Cambridge; parking and shuttle arrangements differ between flying events.",
+    "postcode": "CB22 4QR",
+    "officialUrl": "https://www.iwm.org.uk/airshows",
+    "sourceUrl": "https://www.iwm.org.uk/airshows",
+    "checkedAt": "2026-09-22"
+  },
+  {
+    "slug": "duxford-flying-finale-2027",
+    "name": "Duxford Flying Finale",
+    "subtitle": "Duxford, Cambridgeshire",
+    "start": "2027-10-02",
+    "end": "2027-10-02",
+    "location": "Duxford, Cambridgeshire",
+    "region": "East of England",
+    "coordinates": [
+      52.09,
+      0.13
+    ],
+    "venue": "Airfield",
+    "admission": "Ticketed",
+    "status": "confirmed",
+    "image": "/images/events/duxford-summer.webp",
+    "imageAlt": "Representative photograph from a previous Duxford air show",
+    "imageSource": "https://www.iwm.org.uk/airshows/duxford-summer-air-show",
+    "imageCredit": "Imperial War Museums",
+    "description": "The closing flying event announced for IWM Duxford's 2027 season. The 2026 programme is a separate edition and does not confirm this year's aircraft.",
+    "travel": "Check IWM's event-specific arrival information before travelling. The museum is near Cambridge; parking and shuttle arrangements differ between flying events.",
+    "postcode": "CB22 4QR",
+    "officialUrl": "https://www.iwm.org.uk/airshows",
+    "sourceUrl": "https://www.iwm.org.uk/airshows",
+    "checkedAt": "2026-09-22"
+  },
+  {
+    "slug": "duxford-flying-finale-2026",
+    "name": "Duxford Flying Finale",
+    "subtitle": "Duxford, Cambridgeshire",
+    "start": "2026-10-03",
+    "end": "2026-10-03",
+    "location": "Duxford, Cambridgeshire",
+    "region": "East of England",
+    "coordinates": [
+      52.09,
+      0.13
+    ],
+    "venue": "Airfield",
+    "admission": "Ticketed",
+    "status": "confirmed",
+    "image": "/images/events/duxford-summer.webp",
+    "imageAlt": "Representative photograph from a previous Duxford air show",
+    "imageSource": "https://www.iwm.org.uk/airshows/duxford-summer-air-show",
+    "imageCredit": "Imperial War Museums",
+    "description": "IWM Duxford's final flying event of 2026. Advance booking is required; tickets are not sold on the day. The organiser lists the Red Arrows and RAF Typhoon, with further programme updates expected.",
+    "travel": "IWM states that there are no free shuttle buses from Cambridge station or Trumpington park and ride for this event. On-site parking does not need a separate booking. Use the museum's travel information to plan your route.",
+    "postcode": "CB22 4QR",
+    "officialUrl": "https://www.iwm.org.uk/airshows/duxford-flying-finale",
+    "sourceUrl": "https://www.iwm.org.uk/airshows/duxford-flying-finale",
+    "checkedAt": "2026-09-22",
+    "ticketUrl": "https://tickets.iwm.org.uk/event-tickets/70207",
+    "travelSourceUrl": "https://www.iwm.org.uk/airshows/duxford-flying-finale"
+  },
+  {
+    "slug": "clacton-airshow-2026",
+    "name": "Clacton Airshow",
+    "subtitle": "Clacton-on-Sea, Essex",
+    "start": "2026-08-27",
+    "end": "2026-08-28",
+    "location": "Clacton-on-Sea, Essex",
+    "region": "East of England",
+    "coordinates": [
+      51.787,
+      1.149
+    ],
+    "venue": "Seafront",
+    "admission": "Free",
+    "status": "completed",
+    "image": "/images/red-arrows.jpg",
+    "imageAlt": "Representative Red Arrows photograph, not confirmation of this event's aircraft",
+    "description": "Tendring District Council's free seafront airshow in Clacton-on-Sea. These are the council's published 2026 dates; aircraft participation must be checked against the programme for this edition.",
+    "travel": "Use the official Clacton Airshow visitor information for viewing areas, parking and transport. Do not assume that previous editions' road closures or timetables will apply.",
+    "postcode": "",
+    "officialUrl": "https://clactonairshow.com/",
+    "sourceUrl": "https://www.tendringdc.gov.uk/news/clacton-airshow-dates-revealed-for-2026",
+    "checkedAt": "2026-09-22"
+  },
+  {
+    "slug": "clacton-airshow-2027",
+    "name": "Clacton Airshow",
+    "subtitle": "Clacton-on-Sea, Essex",
+    "start": "2027-08-26",
+    "end": "2027-08-27",
+    "location": "Clacton-on-Sea, Essex",
+    "region": "East of England",
+    "coordinates": [
+      51.787,
+      1.149
+    ],
+    "venue": "Seafront",
+    "admission": "Free",
+    "status": "confirmed",
+    "image": "/images/red-arrows.jpg",
+    "imageAlt": "Representative Red Arrows photograph, not confirmation of this event's aircraft",
+    "description": "Tendring District Council's free seafront airshow in Clacton-on-Sea. These are the council's published 2027 dates; aircraft participation must be checked against the programme for this edition.",
+    "travel": "Use the official Clacton Airshow visitor information for viewing areas, parking and transport. Do not assume that previous editions' road closures or timetables will apply.",
+    "postcode": "",
+    "officialUrl": "https://clactonairshow.com/",
+    "sourceUrl": "https://www.tendringdc.gov.uk/news/clacton-airshow-dates-revealed-for-2027",
+    "checkedAt": "2026-09-22"
+  },
+  {
+    "slug": "old-buckenham-airshow-2026",
+    "name": "Old Buckenham Airshow",
+    "subtitle": "Old Buckenham, Norfolk",
+    "start": "2026-07-25",
+    "end": "2026-07-26",
+    "location": "Old Buckenham Airfield, Norfolk",
+    "region": "East of England",
+    "coordinates": [
+      52.497,
+      1.052
+    ],
+    "venue": "Airfield",
+    "admission": "Ticketed",
+    "status": "completed",
+    "image": "/images/spitfire.jpg",
+    "imageAlt": "Representative Spitfire MH434 photograph, not a photograph of the 2026 event",
+    "description": "A two-day airfield show in Norfolk. The 2026 programme included several Spitfire variants, with different combinations on Saturday and Sunday. This page preserves the published edition rather than confirming that every planned display flew.",
+    "travel": "The organiser advises following yellow airshow signs from the A11 rather than satellite navigation through Attleborough. The airfield is on Abbey Road, Old Buckenham. Historic traffic arrangements may change for later editions.",
+    "travelSourceUrl": "https://www.oldbuckenhamairshow.com/",
+    "postcode": "NR17 1PU",
+    "officialUrl": "https://www.oldbuckenhamairshow.com/",
+    "sourceUrl": "https://www.oldbuckenhamairshow.com/",
+    "checkedAt": "2026-09-22"
+  },
+  {
+    "slug": "wales-airshow-2026",
+    "name": "Wales Airshow",
+    "subtitle": "Swansea Bay, Wales",
+    "start": "2026-07-25",
+    "end": "2026-07-26",
+    "location": "Swansea Bay, Swansea",
+    "region": "Wales",
+    "coordinates": [
+      51.611,
+      -3.96
+    ],
+    "venue": "Seafront",
+    "admission": "Free",
+    "status": "completed",
+    "image": "/images/red-arrows.jpg",
+    "imageAlt": "Representative Red Arrows photograph, not confirmation of this event's aircraft",
+    "description": "Swansea Council's free two-day airshow over Swansea Bay. General admission did not require a ticket. This is the 2026 edition; a future date should be checked separately with the organiser.",
+    "travel": "The published display area ran along Swansea Prom between the Cenotaph and Civic Centre. The organiser provided event parking and park-and-ride information and advised following airshow signs. Check new arrangements before visiting a later edition.",
+    "travelSourceUrl": "https://www.walesnationalairshow.com/information/travel/",
+    "postcode": "SA1 4PQ",
+    "officialUrl": "https://www.walesnationalairshow.com/",
+    "sourceUrl": "https://www.walesnationalairshow.com/information/faqs/",
+    "checkedAt": "2026-09-22"
   }
 ];
 export const appearances: Appearance[] = [
@@ -737,6 +968,30 @@ export const appearances: Appearance[] = [
     "checkedAt": "2026-09-14",
     "sourceUrl": "https://www.south-ayrshire.gov.uk/council-news/International-Ayr-Show-Festival-of-Flight-2026-full-flying-display-schedule-announced",
     "details": "Scheduled for both 4 and 5 September in the council’s published programme."
+  },
+  {
+    "event": "duxford-flying-finale-2026",
+    "aircraft": "red-arrows",
+    "status": "confirmed",
+    "checkedAt": "2026-09-22",
+    "sourceUrl": "https://www.iwm.org.uk/airshows/duxford-flying-finale",
+    "details": "IWM lists the Red Arrows for 3 October 2026. The flying list was dated 14 September when checked; flying remains subject to weather and serviceability."
+  },
+  {
+    "event": "duxford-flying-finale-2026",
+    "aircraft": "typhoon",
+    "status": "confirmed",
+    "checkedAt": "2026-09-22",
+    "sourceUrl": "https://www.iwm.org.uk/airshows/duxford-flying-finale",
+    "details": "IWM lists the RAF Typhoon Display Team for 3 October 2026. The flying list was dated 14 September when checked; flying remains subject to weather and serviceability."
+  },
+  {
+    "event": "old-buckenham-airshow-2026",
+    "aircraft": "spitfire",
+    "status": "confirmed",
+    "checkedAt": "2026-09-22",
+    "sourceUrl": "https://www.oldbuckenhamairshow.com/post/the-definitive-list-2026",
+    "details": "Published programme: MH434, RW232 and MK912 on both days; a BBMF Spitfire and EE602 on Saturday; TA805 on Sunday. This records the planned programme, not proof of flight."
   }
 ];
 export function dateLabel(event: Pick<Airshow, "start" | "end">) {

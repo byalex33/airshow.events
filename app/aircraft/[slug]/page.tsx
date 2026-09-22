@@ -1,6 +1,8 @@
 import { CatalogProvider } from "@/components/catalog-provider";
 import { getCatalog } from "@/lib/catalog";
 import Link from "next/link";
+import { StructuredData } from "@/components/structured-data";
+import { breadcrumbData } from "@/lib/structured-data";
 import { pageMetadata } from "@/lib/metadata";
 import { notFound } from "next/navigation";
 import { events } from "@/lib/content";
@@ -15,7 +17,7 @@ export async function generateMetadata({
   const plane = aircraft.find((a) => a.slug === slug);
   if (!plane) notFound();
   return pageMetadata(
-    plane.name,
+    `${plane.name}: UK display appearances`,
     `Explore ${plane.name}, ${plane.category.toLowerCase()} operated by ${plane.operator}. Browse sourced UK programme records.`,
     `/aircraft/${plane.slug}/`,
     plane.image,
@@ -41,6 +43,7 @@ export default async function Page({
   return (
     <CatalogProvider catalog={{ aircraft, appearances }}>
     <main id="main">
+      <StructuredData data={breadcrumbData([{ name: "Home", path: "/" }, { name: "Aircraft & display teams", path: "/aircraft/" }, { name: plane.name, path: `/aircraft/${plane.slug}/` }])} />
       <section className="detail-hero">
         <img src={plane.image} alt={plane.imageAlt} fetchPriority="high" />
         <div className="container detail-hero-content">

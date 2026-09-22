@@ -1,6 +1,10 @@
 import { CatalogProvider } from "@/components/catalog-provider";
 import { getCatalog } from "@/lib/catalog";
 import Link from "next/link";
+import { StructuredData } from "@/components/structured-data";
+import { breadcrumbData, eventData, eventTitle } from "@/lib/structured-data";
+import { collectionsForEvent } from "@/lib/discovery";
+import styles from "@/components/discovery.module.css";
 import { pageMetadata } from "@/lib/metadata";
 import { notFound } from "next/navigation";
 import { dateLabel, events } from "@/lib/content";
@@ -25,7 +29,7 @@ export async function generateMetadata({
   const event = events.find((e) => e.slug === slug);
   if (!event) notFound();
   return pageMetadata(
-    event.name,
+    `${eventTitle(event)}: dates & tickets`,
     `${dateLabel(event)} ${event.start.slice(0, 4)} in ${event.location}. Organiser-sourced dates, travel information and recorded aircraft programmes.`,
     `/airshows/${event.slug}/`,
     event.image,
@@ -45,6 +49,8 @@ export default async function Page({
   return (
     <CatalogProvider catalog={{ aircraft, appearances }}>
     <main id="main">
+      <StructuredData data={eventData(event)} />
+      <StructuredData data={breadcrumbData([{ name: "Home", path: "/" }, { name: "Airshow calendar", path: "/calendar/" }, { name: eventTitle(event), path: `/airshows/${event.slug}/` }])} />
       <section className="detail-hero">
         <img src={event.image} alt={event.imageAlt} fetchPriority="high" />
         <div className="container detail-hero-content">
@@ -52,7 +58,7 @@ export default async function Page({
             ← Airshow calendar
           </Link>
           <LiveStatus event={event} />
-          <h1>{event.name}</h1>
+          <h1>{eventTitle(event)}</h1>
           <div className="detail-meta">
             <span>
               <Icon name="calendar" />
@@ -70,7 +76,7 @@ export default async function Page({
         <div className="detail-layout">
           <div className="detail-copy">
             <span className="eyebrow">{event.subtitle.toUpperCase()}</span>
-            <h2>A day with your eyes on the sky.</h2>
+            <h2>Dates and visitor information</h2>
             <p>{event.description}</p>
             <p><a href={event.sourceUrl} target="_blank" rel="noreferrer">Official date source ↗</a> · Checked {event.checkedAt}</p>
             <p>Photography is representative and does not confirm aircraft attendance.</p>
@@ -105,6 +111,7 @@ export default async function Page({
             })}
             <h2>Getting there</h2>
             <p>{event.travel}</p>
+            {event.travelSourceUrl && <p><a href={event.travelSourceUrl} target="_blank" rel="noreferrer">Official travel information ↗</a></p>}
             <div className="travel-box">
               <span className="eyebrow">PLAN YOUR ARRIVAL</span>
               <p>
@@ -177,6 +184,13 @@ export default async function Page({
             </p>
           </aside>
         </div>
+        <section className={styles.section}>
+          <h2>More airshow dates</h2>
+          <nav className={styles.links} aria-label="Related airshow collections">
+            {collectionsForEvent(event).map((collection) => <Link key={collection.slug} href={`/calendar/${collection.slug}/`}>{collection.title}</Link>)}
+            {events.filter((other) => other.name === event.name && other.slug !== event.slug).map((other) => <Link key={other.slug} href={`/airshows/${other.slug}/`}>{eventTitle(other)}</Link>)}
+          </nav>
+        </section>
       </div>
     </main>
     </CatalogProvider>
