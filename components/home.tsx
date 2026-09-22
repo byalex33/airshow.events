@@ -15,7 +15,7 @@ import {
   events,
   upcoming,
 } from "@/lib/content";
-export default function Home() {
+export default function Home({ children }: { children?: React.ReactNode }) {
   const [shows, setShows] = useState(() => upcoming());
   useEffect(() => setShows(upcoming()), []);
   return (
@@ -137,6 +137,7 @@ export default function Home() {
           </div>
         </div>
       </section>
+      {children}
     </main>
   );
 }

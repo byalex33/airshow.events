@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
+import { seasonLabel } from "./discovery";
 
 export const siteUrl = "https://airshow.events";
 export const siteDescription =
-  "Explore selected UK airshows and published aircraft line-ups, with links to official sources. Our growing calendar has partial coverage. Check organisers for updates.";
+  `Find UK airshows in ${seasonLabel}. Browse sourced dates, free-entry shows and aircraft programmes, with official organiser links. Coverage is growing.`;
 
 export function pageMetadata(
   title: string,

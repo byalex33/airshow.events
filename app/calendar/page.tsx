@@ -1,15 +1,20 @@
 import { Suspense } from "react";
 import Calendar from "@/components/calendar";
+import { DiscoveryLinks } from "@/components/discovery";
+import { seasonLabel } from "@/lib/discovery";
 import { pageMetadata } from "@/lib/metadata";
 export const metadata = pageMetadata(
-  "Airshow calendar",
-  "Find a day worth looking up for. Browse UK airshows by date, location, aircraft and free entry. Browse sourced 2026 and 2027 listings.",
+  `UK airshow calendar ${seasonLabel}`,
+  "Browse UK airshow dates by location, month, aircraft and free entry. Compare sourced listings on a map and find official event and ticket information.",
   "/calendar/",
 );
 export default function Page() {
   return (
-    <Suspense fallback={<main id="main" className="container page-main">Loading the airshow calendar…</main>}>
-      <Calendar />
-    </Suspense>
+    <main id="main">
+      <Suspense fallback={<div className="container page-main">Loading the airshow calendar…</div>}>
+        <Calendar />
+      </Suspense>
+      <DiscoveryLinks />
+    </main>
   );
 }
