@@ -1,9 +1,9 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { events } from "../lib/content";
+import { aircraft, events } from "../lib/content";
 import { airshowCollections, collectionsForEvent } from "../lib/discovery";
 import { breadcrumbData, collectionData, eventData, eventTitle, serializeJsonLd } from "../lib/structured-data";
-import sitemap from "../app/sitemap";
+import { sitemapEntries } from "../lib/metadata";
 import { siteUrl } from "../lib/metadata";
 
 test("structured events preserve sourced dates, location and cancellation without inventing offers", () => {
@@ -49,7 +49,7 @@ test("collection pages contain matching records and every event has a season rou
 });
 
 test("sitemap lists canonical collections and local images without fictitious modification dates", () => {
-  const entries = sitemap();
+  const entries = sitemapEntries(aircraft);
   assert.equal(new Set(entries.map((entry) => entry.url)).size, entries.length);
   for (const collection of airshowCollections()) assert(entries.some((entry) => entry.url === `${siteUrl}/calendar/${collection.slug}/`));
   for (const entry of entries) {
@@ -60,4 +60,12 @@ test("sitemap lists canonical collections and local images without fictitious mo
   for (const event of events) assert.deepEqual(entries.find((entry) => entry.url === `${siteUrl}/airshows/${event.slug}/`)?.images, [`${siteUrl}${event.image}`]);
   const breadcrumbs = breadcrumbData([{ name: "Home", path: "/" }, { name: "Calendar", path: "/calendar/" }]);
   assert.deepEqual(breadcrumbs.itemListElement.map((item) => [item.position, item.item]), [[1, `${siteUrl}/`], [2, `${siteUrl}/calendar/`]]);
+});
+
+test("live aircraft sitemap retains collections and images alongside new profiles", () => {
+  const discovered = { ...aircraft[0], slug: "newly-discovered-aircraft", image: "/images/aircraft-placeholder.svg" };
+  const entries = sitemapEntries([...aircraft, discovered]);
+  assert.deepEqual(entries.find((entry) => entry.url === `${siteUrl}/aircraft/${discovered.slug}/`)?.images, [`${siteUrl}${discovered.image}`]);
+  for (const collection of airshowCollections()) assert(entries.some((entry) => entry.url === `${siteUrl}/calendar/${collection.slug}/`));
+  for (const event of events) assert(entries.some((entry) => entry.url === `${siteUrl}/airshows/${event.slug}/`));
 });

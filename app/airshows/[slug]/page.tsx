@@ -1,3 +1,5 @@
+import { CatalogProvider } from "@/components/catalog-provider";
+import { getCatalog } from "@/lib/catalog";
 import Link from "next/link";
 import { StructuredData } from "@/components/structured-data";
 import { breadcrumbData, eventData, eventTitle } from "@/lib/structured-data";
@@ -5,7 +7,7 @@ import { collectionsForEvent } from "@/lib/discovery";
 import styles from "@/components/discovery.module.css";
 import { pageMetadata } from "@/lib/metadata";
 import { notFound } from "next/navigation";
-import { aircraft, appearances, dateLabel, events } from "@/lib/content";
+import { dateLabel, events } from "@/lib/content";
 import {
   Countdown,
   DataNotice,
@@ -39,11 +41,13 @@ export default async function Page({
 }: {
   params: Promise<{ slug: string }>;
 }) {
+  const { aircraft, appearances } = await getCatalog();
   const { slug } = await params;
   const event = events.find((e) => e.slug === slug);
   if (!event) notFound();
   const lineup = appearances.filter((a) => a.event === slug);
   return (
+    <CatalogProvider catalog={{ aircraft, appearances }}>
     <main id="main">
       <StructuredData data={eventData(event)} />
       <StructuredData data={breadcrumbData([{ name: "Home", path: "/" }, { name: "Airshow calendar", path: "/calendar/" }, { name: eventTitle(event), path: `/airshows/${event.slug}/` }])} />
@@ -189,5 +193,6 @@ export default async function Page({
         </section>
       </div>
     </main>
+    </CatalogProvider>
   );
 }

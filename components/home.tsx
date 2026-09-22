@@ -1,4 +1,5 @@
 "use client";
+import { useCatalog } from "@/components/catalog-provider";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -10,12 +11,11 @@ import {
   Status,
 } from "@/components/site";
 import {
-  aircraft,
-  appearances,
   events,
   upcoming,
 } from "@/lib/content";
 export default function Home({ children }: { children?: React.ReactNode }) {
+  const { aircraft, appearances } = useCatalog();
   const [shows, setShows] = useState(() => upcoming());
   useEffect(() => setShows(upcoming()), []);
   return (

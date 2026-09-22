@@ -1,4 +1,5 @@
 "use client";
+import { useCatalog } from "@/components/catalog-provider";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
@@ -22,7 +23,6 @@ import {
 import { NumberTicker } from "@/components/beui/number-ticker";
 import { TextReveal } from "@/components/beui/text-reveal";
 import {
-  aircraft,
   emptyFilters,
   events,
   filterEvents,
@@ -88,7 +88,9 @@ export default function Calendar() {
     else params.set("view", next);
     replaceParams(params);
   }
-  const results = useMemo(() => filterEvents(filters, events), [filters]);
+  const catalog = useCatalog();
+  const { aircraft } = catalog;
+  const results = useMemo(() => filterEvents(filters, events, undefined, catalog), [filters, catalog]);
   const active = Object.values(filters).filter(Boolean).length;
   useEffect(() => {
     const context = (document as Document & { modelContext?: ModelContext })
@@ -120,7 +122,7 @@ export default function Calendar() {
           );
         const next = { ...filters, query: input.query };
         flushSync(() => setFilters(next));
-        return filterEvents(next, events).map((e) => ({
+        return filterEvents(next, events, undefined, catalog).map((e) => ({
           name: e.name,
           slug: e.slug,
           start: e.start,
@@ -133,7 +135,7 @@ export default function Calendar() {
       ).catch(() => {});
     } catch {}
     return () => lifecycle.abort();
-  }, [filters]);
+  }, [filters, catalog]);
   function select(key: keyof Filters, label: string, options: string[]) {
     return (
       <div className="filter-field">
