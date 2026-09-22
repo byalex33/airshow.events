@@ -107,6 +107,7 @@ export default async function Page({
             })}
             <h2>Getting there</h2>
             <p>{event.travel}</p>
+            {event.travelSourceUrl && <p><a href={event.travelSourceUrl} target="_blank" rel="noreferrer">Official travel information ↗</a></p>}
             <div className="travel-box">
               <span className="eyebrow">PLAN YOUR ARRIVAL</span>
               <p>

@@ -13,6 +13,7 @@ export const seasonYears = [...new Set(events.map((event) => event.start.slice(0
 export const seasonLabel = seasonYears.join(" & ");
 
 const regions = [
+  { slug: "wales", region: "Wales", advice: "Our current Welsh listing is the 2026 Swansea Bay edition. Check the year and organiser announcement before planning a future visit; historic travel arrangements and aircraft programmes do not carry forward automatically." },
   { slug: "east-of-england", region: "East of England", advice: "Compare the separate Old Warden and Duxford event editions before booking. A ticket or programme for one date does not apply to the rest of the season." },
   { slug: "south-west", region: "South West", advice: "This region includes airfield and coastal events. Check whether your chosen show needs an entry ticket and whether parking or a reserved viewing area costs extra." },
   { slug: "midlands", region: "Midlands", advice: "Airfield and estate events can have different arrival arrangements. Use the organiser's event-specific directions and check which days your ticket covers." },
@@ -38,8 +39,8 @@ export function airshowCollections(): AirshowCollection[] {
     },
     ...regions.map(({ slug, region, advice }) => ({
       slug,
-      title: `Airshows in ${region === "Scotland" ? "Scotland" : `the ${region}`}`,
-      description: `Find airshows in ${region === "Scotland" ? "Scotland" : `the ${region}`}, with sourced dates, locations, entry information and links to official event programmes.`,
+      title: `Airshows in ${["Scotland", "Wales"].includes(region) ? region : `the ${region}`}`,
+      description: `Find airshows in ${["Scotland", "Wales"].includes(region) ? region : `the ${region}`}, with sourced dates, locations, entry information and links to official event programmes.`,
       advice,
       events: events.filter((event) => event.region === region).sort(byDate),
     })),

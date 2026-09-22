@@ -67,3 +67,7 @@ Set `FIRECRAWL_API_KEY`, `CRON_SECRET` and `BLOB_READ_WRITE_TOKEN` in Vercel Pro
 Reviews include event JSON-LD, aircraft programmes, source text and HTTPS image candidates. They are private review material, not automatic publication. An editor must confirm event identity, year, aircraft claims and image suitability before updating `lib/content.ts`. Organiser photography is bundled under `public/images/events/`, with source and photographer credits on the About page; it may show previous editions. The scraper does not infer attendance from a photograph.
 
 Firecrawl currently returns HTTP 402 due to exhausted credits. Hosting and storage can operate without this computer, but collection needs available Firecrawl credits. No live aircraft extraction has succeeded yet.
+
+### Coverage review, 22 September 2026
+
+The calendar now includes 32 event editions and nine programme records. Nine editions were added from IWM, Tendring District Council, Old Buckenham Airshow and Wales Airshow sources. Five are announced 2027 dates, and the 3 October 2026 Duxford Flying Finale has sourced Red Arrows and Typhoon records. The Wales browse collection currently contains the historical 2026 edition. See [the verification record](docs/coverage-2026-09-22.md) for evidence and candidates held back. Earlier records retain their own check dates.
