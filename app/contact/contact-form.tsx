@@ -82,7 +82,7 @@ export function ContactForm() {
           );
         })}
       </div>
-      <div hidden aria-hidden="true">
+      <div aria-hidden="true" style={{ position: "absolute", left: "-10000px", width: 1, height: 1, overflow: "hidden" }}>
         <label htmlFor="contact-website">Leave this blank</label>
         <input id="contact-website" name="website" tabIndex={-1} autoComplete="off" />
       </div>
