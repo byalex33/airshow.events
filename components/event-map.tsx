@@ -3,7 +3,8 @@ import { useEffect, useRef } from "react";
 import Link from "next/link";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
-import { dateLabel, type Airshow } from "@/lib/content";
+import type { Airshow } from "@/lib/content";
+import { groupEventsByCoordinates, mapDateLabel, mapMarkerLabel } from "@/lib/event-map";
 export default function EventMap({ events }: { events: Airshow[] }) {
   const element = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -18,29 +19,33 @@ export default function EventMap({ events }: { events: Airshow[] }) {
       maxZoom: 18,
     }).addTo(map);
     const bounds: L.LatLngTuple[] = [];
-    for (const event of events) {
-      bounds.push(event.coordinates);
+    for (const group of groupEventsByCoordinates(events)) {
+      bounds.push(group.coordinates);
       const popup = document.createElement("div");
-      const link = document.createElement("a");
-      link.href = `/airshows/${event.slug}/`;
-      link.textContent = event.name;
-      popup.append(
-        link,
-        document.createElement("br"),
-        document.createTextNode(dateLabel(event)),
-      );
-      const marker = L.marker(event.coordinates, {
-        title: event.name,
+      popup.className = "map-venue-events";
+      for (const event of group.events) {
+        const link = document.createElement("a");
+        link.href = `/airshows/${event.slug}/`;
+        const name = document.createElement("strong");
+        name.textContent = event.name;
+        const date = document.createElement("span");
+        date.textContent = mapDateLabel(event);
+        link.append(name, date);
+        popup.append(link);
+      }
+      const label = mapMarkerLabel(group.events);
+      const marker = L.marker(group.coordinates, {
+        title: label,
         icon: L.divIcon({
           className: "airshow-marker",
-          html: "<span>✦</span>",
+          html: `<span>${group.events.length > 1 ? group.events.length : "✦"}</span>`,
           iconSize: [34, 34],
           iconAnchor: [17, 17],
         }),
       })
         .addTo(map)
-        .bindPopup(popup);
-      marker.getElement()?.setAttribute("aria-label", event.name);
+        .bindPopup(popup, { maxHeight: 260 });
+      marker.getElement()?.setAttribute("aria-label", label);
     }
     if (bounds.length) map.fitBounds(bounds, { padding: [55, 55], maxZoom: 9 });
     return () => {
@@ -60,7 +65,7 @@ export default function EventMap({ events }: { events: Airshow[] }) {
           <Link key={e.slug} href={`/airshows/${e.slug}/`}>
             <strong>{e.name}</strong>
             <span>{e.location}</span>
-            <small>{dateLabel(e)}</small>
+            <small>{mapDateLabel(e)}</small>
           </Link>
         ))}
       </aside>

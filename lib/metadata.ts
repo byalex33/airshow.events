@@ -1,8 +1,11 @@
+import { events, type Aircraft } from "./content";
+import type { MetadataRoute } from "next";
 import type { Metadata } from "next";
+import { airshowCollections, seasonLabel } from "./discovery";
 
 export const siteUrl = "https://airshow.events";
 export const siteDescription =
-  "Find your next UK airshow. Explore aircraft and display teams, browse the calendar, and plan your flying season. Demo listings and appearances.";
+  `Find UK airshows in ${seasonLabel}. Browse sourced dates, free-entry shows and aircraft programmes, with official organiser links. Coverage is growing.`;
 
 export function pageMetadata(
   title: string,
@@ -28,4 +31,13 @@ export function pageMetadata(
     },
     twitter: { card: "summary_large_image", title: socialTitle, description, images },
   };
+}
+
+export function sitemapEntries(aircraft: Aircraft[]): MetadataRoute.Sitemap {
+  return [
+    ...["/", "/calendar/", "/aircraft/", "/about/", "/contact/"].map((path) => ({ url: `${siteUrl}${path}` })),
+    ...airshowCollections().map(({ slug }) => ({ url: `${siteUrl}/calendar/${slug}/` })),
+    ...events.map((event) => ({ url: `${siteUrl}/airshows/${event.slug}/`, images: [new URL(event.image, siteUrl).href] })),
+    ...aircraft.map((plane) => ({ url: `${siteUrl}/aircraft/${plane.slug}/`, images: [new URL(plane.image, siteUrl).href] })),
+  ];
 }

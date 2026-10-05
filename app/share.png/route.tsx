@@ -20,9 +20,9 @@ export async function GET() {
           <div style={{ fontSize: 17, letterSpacing: 3, color: "#707070", marginBottom: 24 }}>UK AIRSHOWS / DISCOVER YOUR SEASON</div>
           <div style={{ fontSize: 80, lineHeight: 1.02, letterSpacing: -4, fontWeight: 700 }}>A good day</div>
           <div style={{ fontSize: 80, lineHeight: 1.02, letterSpacing: -4, fontWeight: 700 }}>to look up.</div>
-          <div style={{ fontSize: 24, lineHeight: 1.4, color: "#606060", marginTop: 26 }}>Find your next airshow. Follow the aircraft worth travelling for.</div>
+          <div style={{ fontSize: 24, lineHeight: 1.4, color: "#606060", marginTop: 26 }}>Selected UK airshows with official sources. Coverage is growing.</div>
         </div>
-        <div style={{ display: "flex", fontSize: 18, color: "#707070" }}>airshow.events / Demo season</div>
+        <div style={{ display: "flex", fontSize: 18, color: "#707070" }}>airshow.events / Check organisers for updates</div>
       </div>
       <div style={{ display: "flex", position: "relative", flex: 1, borderRadius: 18, overflow: "hidden", background: "#ccd8e4" }}>
         <img src={`data:image/jpeg;base64,${photo.toString("base64")}`} alt="" width="554" height="534" style={{ width: "100%", height: "100%", objectFit: "cover" }} />

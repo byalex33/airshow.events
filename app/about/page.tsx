@@ -22,9 +22,9 @@ export default function Page() {
       </div>
       <div className="credits">
         <h2>Dates with a source</h2>
-        <p>Our first import covers selected 2026 events, including past dates, and published 2027 dates. Each listing links to an official organiser, council or RAF source and records when it was checked. This is a growing calendar, not a complete UK schedule.</p>
+        <p>Our calendar covers selected 2026 events, including past dates, and published 2027 dates. Each listing links to an official organiser, council or RAF source and records when it was checked. This is a growing calendar, not a complete UK schedule.</p>
         <p>Event confirmation is separate from aircraft participation. Aircraft records describe published programmes, not proof that a display took place. Empty line-ups mean we have not recorded confirmations. A Spitfire entry groups the aircraft type; operator and variant details appear with each programme record.</p>
-        <p>Sources were checked on 14 September 2026. Updates are reviewed manually. Dates, ticket availability and flying can change. Calendar downloads are snapshots and will not update automatically. Check the organiser before travelling.</p>
+        <p>Each event and aircraft record shows its own source check date. Updates are reviewed manually. Dates, ticket availability and flying can change. Calendar downloads are snapshots and will not update automatically. Check the organiser before travelling.</p>
         <p>Map pins show approximate venues, not entrance gates. Local weather links lead to the Met Office; we do not display a live forecast.</p>
         <h2>Photography</h2>
         <p>Event photographs come from the organisers’ linked pages and may show previous editions. Copyright remains with the credited photographers and organisations.</p>

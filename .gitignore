@@ -8,5 +8,3 @@ out/
 
 .vercel/
 .airshow-monitor/
-
-.env*

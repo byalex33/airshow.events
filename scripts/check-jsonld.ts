@@ -6,11 +6,16 @@ type Candidate = { name: string; startDate: string; endDate: string; location: s
 const text = (value: unknown): string => typeof value === "string" ? value.trim() : "";
 function date(value: unknown) {
   const valueText = text(value);
-  return /^\d{4}-\d{2}-\d{2}$/.test(valueText) && Number.isFinite(Date.parse(valueText)) && new Date(valueText).toISOString().slice(0, 10) === valueText ? valueText : "";
+  const match = /^(\d{4}-\d{2}-\d{2})(?:T([01]\d|2[0-3]):([0-5]\d)(?::([0-5]\d)(?:\.\d+)?)?(?:Z|[+-](?:[01]\d|2[0-3]):?[0-5]\d)?)?$/.exec(valueText);
+  if (!match) return "";
+  const calendarDate = match[1];
+  // Validate the date separately so timezone conversion cannot change the event day.
+  return Number.isFinite(Date.parse(calendarDate)) && new Date(calendarDate).toISOString().slice(0, 10) === calendarDate ? calendarDate : "";
 }
 
 export function extractEvents(html: string): Candidate[] {
   const candidates: Candidate[] = [];
+  let invalidEvent = false;
   function visit(value: unknown) {
     if (Array.isArray(value)) { value.forEach(visit); return; }
     if (!value || typeof value !== "object") return;
@@ -23,17 +28,23 @@ export function extractEvents(html: string): Candidate[] {
       const location = record.location as Record<string, unknown> | undefined;
       const address = location?.address;
       const addressText = typeof address === "object" && address ? ["streetAddress", "addressLocality", "addressRegion", "postalCode", "addressCountry"].map((key) => text((address as Record<string, unknown>)[key])).filter(Boolean).join(", ") : text(address);
-      if (!name || !startDate || !endDate || endDate < startDate || !text(location?.name)) throw new Error("Invalid event JSON-LD; previous data preserved");
-      candidates.push({ name, startDate, endDate, location: text(location?.name), address: addressText, dateModified: text(record.dateModified) || null });
+      if (!name || !startDate || !endDate || endDate < startDate || !text(location?.name)) {
+        invalidEvent = true;
+      } else {
+        candidates.push({ name, startDate, endDate, location: text(location?.name), address: addressText, dateModified: text(record.dateModified) || null });
+      }
     }
     if (record["@graph"]) visit(record["@graph"]);
   }
   // ponytail: script-block extraction for the allowlisted page; use an HTML parser if its markup outgrows this pattern.
   for (const match of html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script\s*>/gi)) {
     if (!/\btype\s*=\s*(["'])application\/ld\+json\1/i.test(match[1])) continue;
-    visit(JSON.parse(match[2]));
+    let value: unknown;
+    try { value = JSON.parse(match[2]); }
+    catch { continue; }
+    visit(value);
   }
-  if (!candidates.length) throw new Error("No event JSON-LD found; previous data preserved");
+  if (!candidates.length) throw new Error(`${invalidEvent ? "Invalid event JSON-LD" : "No event JSON-LD found"}; previous data preserved`);
   return candidates;
 }
 

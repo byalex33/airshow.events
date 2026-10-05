@@ -47,17 +47,27 @@ function isDate(value: unknown): value is string {
 const normalize = (value: string) => value.replace(/\s+/g, " ").trim().toLowerCase();
 const nonempty = (value: unknown): value is string => typeof value === "string" && value.trim().length > 0;
 
-export function validateProgrammes(value: unknown, markdown: string): Programme[] {
+export function parseProgrammes(value: unknown): Programme[] {
   if (!value || typeof value !== "object" || !("programmes" in value) || !Array.isArray(value.programmes)) throw new Error("Missing programme extraction; previous snapshot preserved");
   for (const entry of value.programmes) {
     if (!entry || !nonempty(entry.eventName) || !isDate(entry.eventStart) || !isDate(entry.eventEnd) || entry.eventEnd < entry.eventStart || !["announced", "not-announced", "unknown"].includes(entry.announcement) || !Array.isArray(entry.aircraft)) throw new Error("Invalid programme dates or fields");
     if (entry.announcement === "not-announced" && entry.aircraft.length) throw new Error("Conflicting programme announcement");
     for (const plane of entry.aircraft) {
-      if (!plane || !nonempty(plane.name) || ![null, "string"].includes(plane.variant === null ? null : typeof plane.variant) || ![null, "string"].includes(plane.operator === null ? null : typeof plane.operator) || !["confirmed", "provisional", "cancelled", "unknown"].includes(plane.status) || !["flying", "static", "unknown"].includes(plane.displayType) || !Array.isArray(plane.displayDates) || !plane.displayDates.every((day: unknown) => isDate(day) && day >= entry.eventStart && day <= entry.eventEnd) || !nonempty(plane.evidence) || !normalize(markdown).includes(normalize(plane.evidence))) throw new Error("Invalid or unsupported aircraft record; review source manually");
+      if (!plane || !nonempty(plane.name) || ![null, "string"].includes(plane.variant === null ? null : typeof plane.variant) || ![null, "string"].includes(plane.operator === null ? null : typeof plane.operator) || !["confirmed", "provisional", "cancelled", "unknown"].includes(plane.status) || !["flying", "static", "unknown"].includes(plane.displayType) || !Array.isArray(plane.displayDates) || !plane.displayDates.every((day: unknown) => isDate(day) && day >= entry.eventStart && day <= entry.eventEnd) || !nonempty(plane.evidence)) throw new Error("Invalid or unsupported aircraft record; review source manually");
     }
   }
-  // Evidence and date checks reject obvious errors; year/section attribution still needs review.
+  // Structural checks also protect readers of previously validated stored snapshots.
   return value.programmes as Programme[];
+}
+
+export function validateProgrammes(value: unknown, markdown: string): Programme[] {
+  const programmes = parseProgrammes(value);
+  for (const programme of programmes) {
+    for (const plane of programme.aircraft) {
+      if (!normalize(markdown).includes(normalize(plane.evidence))) throw new Error("Invalid or unsupported aircraft record; review source manually");
+    }
+  }
+  return programmes;
 }
 
 export function programmeReview(programmes: Programme[], sourceUrl: string) {

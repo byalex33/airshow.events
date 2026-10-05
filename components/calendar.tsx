@@ -1,7 +1,9 @@
 "use client";
+import { useCatalog } from "@/components/catalog-provider";
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { useEffect, useMemo } from "react";
 import { flushSync } from "react-dom";
 import {
   Tabs,
@@ -21,7 +23,6 @@ import {
 import { NumberTicker } from "@/components/beui/number-ticker";
 import { TextReveal } from "@/components/beui/text-reveal";
 import {
-  aircraft,
   emptyFilters,
   events,
   filterEvents,
@@ -44,12 +45,9 @@ type ModelContext = {
   ) => void | Promise<void>;
 };
 export default function Calendar() {
-  const [filters, setFilters] = useState<Filters>(emptyFilters);
-  const [view, setView] = useState("cards");
-  const [loaded, setLoaded] = useState(false);
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    setFilters({
+  const params = useSearchParams();
+  const filters = useMemo<Filters>(
+    () => ({
       ...emptyFilters,
       ...Object.fromEntries(
         Object.keys(emptyFilters).map((key) => [
@@ -57,24 +55,42 @@ export default function Calendar() {
           params.get(key === "query" ? "q" : key) || "",
         ]),
       ),
-    });
-    const display = params.get("view");
-    if (display && ["cards", "list", "map"].includes(display)) setView(display);
-    setLoaded(true);
-  }, []);
-  useEffect(() => {
-    if (!loaded) return;
-    const params = new URLSearchParams();
-    for (const [key, value] of Object.entries(filters))
-      if (value) params.set(key === "query" ? "q" : key, value);
-    if (view !== "cards") params.set("view", view);
+    }),
+    [params],
+  );
+  const display = params.get("view");
+  const view = display && ["cards", "list", "map"].includes(display)
+    ? display
+    : "cards";
+
+  // The URL is the source of truth for links, history and local edits.
+  // Writing only from user actions avoids effects overwriting navigation.
+  function replaceParams(next: URLSearchParams) {
+    const query = next.toString();
     window.history.replaceState(
       null,
       "",
-      `${window.location.pathname}${params.size ? "?" + params.toString() : ""}`,
+      `${window.location.pathname}${query ? "?" + query : ""}${window.location.hash}`,
     );
-  }, [filters, view, loaded]);
-  const results = useMemo(() => filterEvents(filters, events), [filters]);
+  }
+  function setFilters(next: Filters) {
+    const params = new URLSearchParams(window.location.search);
+    for (const [key, value] of Object.entries(next)) {
+      const param = key === "query" ? "q" : key;
+      if (value) params.set(param, value);
+      else params.delete(param);
+    }
+    replaceParams(params);
+  }
+  function setView(next: string) {
+    const params = new URLSearchParams(window.location.search);
+    if (next === "cards") params.delete("view");
+    else params.set("view", next);
+    replaceParams(params);
+  }
+  const catalog = useCatalog();
+  const { aircraft } = catalog;
+  const results = useMemo(() => filterEvents(filters, events, undefined, catalog), [filters, catalog]);
   const active = Object.values(filters).filter(Boolean).length;
   useEffect(() => {
     const context = (document as Document & { modelContext?: ModelContext })
@@ -106,7 +122,7 @@ export default function Calendar() {
           );
         const next = { ...filters, query: input.query };
         flushSync(() => setFilters(next));
-        return filterEvents(next, events).map((e) => ({
+        return filterEvents(next, events, undefined, catalog).map((e) => ({
           name: e.name,
           slug: e.slug,
           start: e.start,
@@ -119,7 +135,7 @@ export default function Calendar() {
       ).catch(() => {});
     } catch {}
     return () => lifecycle.abort();
-  }, [filters]);
+  }, [filters, catalog]);
   function select(key: keyof Filters, label: string, options: string[]) {
     return (
       <div className="filter-field">
@@ -146,7 +162,7 @@ export default function Calendar() {
     );
   }
   return (
-    <main id="main" className="container page-main">
+    <div className="container page-main">
       <DataNotice />
       <div className="page-heading">
         <div>
@@ -279,6 +295,6 @@ export default function Calendar() {
         Flying programmes can change. Calendar exports include upcoming events
         only.
       </p>
-    </main>
+    </div>
   );
 }

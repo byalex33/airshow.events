@@ -10,6 +10,7 @@ import {
 } from "@/components/beui/animated-toast-stack";
 import { Dock, DockItem } from "@/components/beui/dock";
 import { Home, Calendar, Aircraft } from "@/components/beui/icons";
+import { Button } from "@/components/ui/button";
 const ToastContext = createContext<(toast: ToastInput) => void>(() => {});
 export const useToast = () => useContext(ToastContext);
 export function ExperienceProvider({ children }: { children: ReactNode }) {
@@ -34,7 +35,19 @@ export function ExperienceProvider({ children }: { children: ReactNode }) {
       showToast({
         id: "missing-event",
         title: "Are we missing an event?",
-        description: <>Tell us <Link className="underline underline-offset-4" href="/contact/" onClick={() => dismissToast("missing-event")}>here</Link>.</>,
+        description: (
+          <>
+            <span className="block">Help us keep the calendar up to date.</span>
+            <Button
+              asChild
+              className="mt-3 min-h-11 max-w-full rounded-full bg-[#f58b57] px-4 py-2 text-xs font-semibold whitespace-normal text-[#171717] hover:bg-[#ffa775] focus-visible:ring-[#f58b57]"
+            >
+              <Link href="/contact/" onClick={() => dismissToast("missing-event")}>
+                Report a missing event <span aria-hidden="true">↗</span>
+              </Link>
+            </Button>
+          </>
+        ),
         status: "info",
         duration: 0,
       });
