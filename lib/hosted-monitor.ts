@@ -1,17 +1,31 @@
 import { get, put } from "@vercel/blob";
 import { createHash } from "node:crypto";
 import { events, appearances } from "./content";
-import { programmeFormat, programmeReview, validateProgrammes, type Programme } from "../scripts/programmes";
+import { programmeReview, validateProgrammes, type Programme } from "../scripts/programmes";
 import { sourceUrls } from "../scripts/check-britishairshows";
 import { extractEvents } from "../scripts/check-jsonld";
 import { fillTypePhotos, findTypePhoto, type TypePhotoLookups } from "./aircraft-photo-lookup";
+import { extractProgrammes, fetchSource, sitemapUrls, type SourcePage } from "./page-collector";
 
 const options = { access: "private" as const, addRandomSuffix: false, contentType: "application/json" };
 type EventDates = { startDate: string; endDate: string };
 type SourceKind = "edition" | "recurring";
 type Page = { sourceKind?: SourceKind; checkedAt: string; programmes: Programme[]; eventDates?: EventDates[]; hash?: string };
-type Collection = { batchId: string; completedAt: string; succeeded: string[]; failed: { url: string; error: string }[] };
-type State = { mappedAt?: string; urls: string[]; pages: Record<string, Page>; batch?: { id: string; urls: string[]; startedAt: string }; lastError?: string; lastCollection?: Collection; photos?: TypePhotoLookups };
+type Collection = { completedAt: string; succeeded: string[]; failed: { url: string; error: string }[]; remaining: number };
+type State = { mappedAt?: string; urls: string[]; pages: Record<string, Page>; batch?: unknown; lastError?: string; lastCollection?: Collection; photos?: TypePhotoLookups };
+export type Collector = {
+  fetchSource: (url: string) => Promise<SourcePage>;
+  extractProgrammes: (text: string, sourceUrl: string) => Promise<unknown>;
+  discover: () => Promise<{ url: string }[]>;
+  photoLookup: typeof findTypePhoto;
+  maxPages: number;
+  budgetMs: number;
+};
+// The cron has 300 seconds: up to 180 for pages, 60 for photo lookups, the rest for storage.
+const defaultCollector: Collector = {
+  fetchSource, extractProgrammes, discover: () => sitemapUrls("https://britishairshows.com/sitemap.xml"),
+  photoLookup: findTypePhoto, maxPages: 40, budgetMs: 180000,
+};
 // Only reviewed, edition-specific official URLs may stop polling. Reused landing
 // pages and newly discovered URLs remain recurring, even when their dates are past.
 const editionSources = new Set([
@@ -24,21 +38,6 @@ const editionSources = new Set([
 ]);
 function sourceKind(url?: string): SourceKind {
   return url && editionSources.has(url) ? "edition" : "recurring";
-}
-class FirecrawlHttpError extends Error {
-  constructor(readonly status: number) {
-    super(`Firecrawl HTTP ${status}`);
-  }
-}
-async function api(path: string, body?: object) {
-  const response = await fetch(`https://api.firecrawl.dev/v2/${path}`, {
-    method: body ? "POST" : "GET", headers: { Authorization: `Bearer ${process.env.FIRECRAWL_API_KEY}`, "Content-Type": "application/json" },
-    body: body ? JSON.stringify(body) : undefined, signal: AbortSignal.timeout(45000), cache: "no-store",
-  });
-  if (!response.ok) throw new FirecrawlHttpError(response.status);
-  const result = await response.json();
-  if (result.success === false) throw new Error("Firecrawl request unsuccessful");
-  return result;
 }
 export function pageDue(page: Page | undefined, now = new Date(), sourceUrl?: string) {
   if (!page) return true;
@@ -60,9 +59,10 @@ export function pageDue(page: Page | undefined, now = new Date(), sourceUrl?: st
   const currentDay = Math.floor(now.getTime() / 86400000);
   return currentDay - checkedDay >= (near ? 1 : 7);
 }
-export async function runHostedMonitor(harvestOnly = false, storage = { get, put }, photoLookup = findTypePhoto) {
+export async function runHostedMonitor(storage = { get, put }, overrides: Partial<Collector> = {}) {
   const { get, put } = storage;
-  // ponytail: one global lease serializes cron/webhook runs; a queue is needed if parallel ingestion becomes necessary.
+  const collector = { ...defaultCollector, ...overrides };
+  // ponytail: one global lease serializes cron runs; a queue is needed if parallel ingestion becomes necessary.
   const lease = await get("monitor/lease.json", { access: "private", useCache: false });
   if (lease && (await new Response(lease.stream).json()).until > Date.now()) return { status: "busy" };
   let acquired;
@@ -78,109 +78,72 @@ export async function runHostedMonitor(harvestOnly = false, storage = { get, put
     state = stored ? await new Response(stored.stream).json() : { urls: [], pages: {} };
     if (!state) throw new Error("Missing monitor state");
     for (const [url, page] of Object.entries(state.pages)) page.sourceKind = sourceKind(url);
-    if (state.batch) {
-      const pending = state.batch;
-      const currentState = state;
-      async function readBatch(path: string) {
-        try {
-          return await api(path);
-        } catch (error) {
-          // Missing or expired results cannot recover on a later poll. Archive before clearing.
-          if (error instanceof FirecrawlHttpError && [404, 410].includes(error.status)) {
-            await put(`monitor/failures/${Date.now()}.json`, JSON.stringify({ batch: pending, status: error.status, error: error.message }), options);
-            currentState.urls = [...new Set([...currentState.urls, ...pending.urls])];
-            delete currentState.batch;
-          }
-          throw error;
-        }
-      }
-      const batch = await readBatch(`batch/scrape/${encodeURIComponent(pending.id)}`);
-      if (batch.status === "scraping") return { status: "scraping" };
-      if (batch.status !== "completed") {
-        const failed = state.batch;
-        await put(`monitor/failures/${Date.now()}.json`, JSON.stringify({ batch: failed, status: batch.status }), options);
-        delete state.batch;
-        throw new Error("Firecrawl batch failed; previous programmes preserved");
-      }
-      const requested = new Set(pending.urls);
-      const succeeded = new Set<string>();
-      const failures = new Map<string, string>();
-      let page = batch;
-      let pageCount = 0;
-      do {
-        for (const data of page.data ?? []) {
-          const url = data?.metadata?.sourceURL;
-          if (!requested.has(url) || succeeded.has(url)) continue;
-          try {
-            if (typeof data.markdown !== "string" || data.metadata?.statusCode >= 400) throw new Error("Unusable source content");
-            const programmes = validateProgrammes(data.json, data.markdown);
-            const checkedAt = new Date().toISOString();
-            const id = createHash("sha256").update(url).digest("hex").slice(0, 20);
-            const hash = createHash("sha256").update(JSON.stringify([programmes, data.markdown, data.images, data.rawHtml])).digest("hex");
-            let eventCandidates: ReturnType<typeof extractEvents>;
-            try { eventCandidates = extractEvents(data.rawHtml ?? ""); } catch { eventCandidates = []; }
-            const eventDates = eventCandidates.map(({ startDate, endDate }) => ({ startDate, endDate }));
-            if (state.pages[url]?.hash !== hash) {
-              const imageCandidates = (Array.isArray(data.images) ? data.images : []).filter((value: unknown) => typeof value === "string" && /^https:\/\//.test(value)).slice(0, 100);
-              await put(`monitor/reviews/${id}-${Date.now()}.json`, JSON.stringify({ sourceUrl: url, checkedAt, requiresReview: true, before: state.pages[url]?.programmes ?? null, after: programmeReview(programmes, url), eventCandidates, imageCandidates, markdown: data.markdown }), options);
-            }
-            state.pages[url] = { sourceKind: sourceKind(url), checkedAt, programmes, eventDates, hash };
-            succeeded.add(url);
-            failures.delete(url);
-          } catch (error) {
-            failures.set(url, error instanceof Error ? error.message : "Invalid extraction");
-          }
-        }
-        if (!page.next) break;
-        const next = new URL(page.next);
-        if (next.origin !== "https://api.firecrawl.dev" || next.pathname !== `/v2/batch/scrape/${state.batch.id}` || ++pageCount > 50) throw new Error("Unexpected batch pagination");
-        page = await readBatch(next.pathname.slice(4) + next.search);
-      } while (true);
-      for (const url of requested) {
-        if (!succeeded.has(url) && !failures.has(url)) failures.set(url, "Requested URL missing from completed batch");
-      }
-      const collection: Collection = {
-        batchId: pending.id, completedAt: new Date().toISOString(), succeeded: [...succeeded],
-        failed: [...failures].map(([url, error]) => ({ url, error })),
-      };
-      for (const failure of collection.failed) {
-        await put(`monitor/failures/${Date.now()}-${createHash("sha256").update(failure.url).digest("hex").slice(0, 12)}.json`, JSON.stringify({ batchId: pending.id, ...failure }), options);
-      }
-      await put(`monitor/batches/${pending.id}.json`, JSON.stringify({ ...pending, ...collection, total: batch.total, completed: batch.completed }), { ...options, allowOverwrite: true });
-      state.lastCollection = collection;
-      delete state.batch;
-      if (collection.failed.length) {
-        state.lastError = `${collection.failed.length} of ${requested.size} requested URLs failed collection; previous snapshots preserved`;
-        return { status: succeeded.size ? "partial" : "failed", collection };
-      }
-      delete state.lastError;
-      if (harvestOnly) return { status: "collected", collection };
-    }
-    if (harvestOnly) return { status: "collected" };
+    // Pending Firecrawl batches from the previous collector can no longer be harvested.
+    delete state.batch;
     if (!state.mappedAt || Date.now() - Date.parse(state.mappedAt) >= 7 * 86400000) {
-      const mapped = await api("map", { url: "https://britishairshows.com", sitemap: "include", includeSubdomains: false, ignoreQueryParameters: true, limit: 5000 });
-      if (!Array.isArray(mapped.links) || !mapped.links.length || mapped.links.length >= 5000) throw new Error("Incomplete discovery; previous URLs preserved");
-      state.urls = [...new Set([...state.urls, ...sourceUrls(mapped.links), ...events.flatMap(e => [e.officialUrl, e.sourceUrl]), ...appearances.map(a => a.sourceUrl)])];
+      const links = await collector.discover();
+      if (!links.length || links.length >= 5000) throw new Error("Incomplete discovery; previous URLs preserved");
+      state.urls = [...new Set([...state.urls, ...sourceUrls(links), ...events.flatMap(e => [e.officialUrl, e.sourceUrl]), ...appearances.map(a => a.sourceUrl)])];
       state.mappedAt = new Date().toISOString();
     }
     const pages = state.pages;
-    const due = state.urls.filter(url => pageDue(pages[url], new Date(), url));
+    const due = [...new Set(state.urls)].filter(url => pageDue(pages[url], new Date(), url));
     if (!due.length) return { status: "up-to-date" };
-    const submitted = await api("batch/scrape", {
-      urls: due, formats: ["markdown", "rawHtml", "images", programmeFormat], onlyMainContent: false, maxAge: 0, maxConcurrency: 3,
-      webhook: { url: "https://airshow.events/api/cron/airshows/", headers: { Authorization: `Bearer ${process.env.CRON_SECRET}` }, events: ["completed"] },
-    });
-    if (typeof submitted.id !== "string") throw new Error("Missing batch identifier");
-    state.batch = { id: submitted.id, urls: due, startedAt: new Date().toISOString() };
-    return { status: "submitted", pages: due.length };
+    const started = Date.now();
+    const succeeded: string[] = [];
+    const failed: { url: string; error: string }[] = [];
+    async function collect(url: string) {
+      try {
+        const source = await collector.fetchSource(url);
+        if (source.text.trim().length < 100) throw new Error("Unusable source content");
+        let eventCandidates: ReturnType<typeof extractEvents>;
+        try { eventCandidates = source.html ? extractEvents(source.html) : []; } catch { eventCandidates = []; }
+        const eventDates = eventCandidates.map(({ startDate, endDate }) => ({ startDate, endDate }));
+        const checkedAt = new Date().toISOString();
+        const hash = createHash("sha256").update(source.text).digest("hex");
+        const previous = pages[url];
+        if (previous?.hash === hash) {
+          // Unchanged text keeps its programmes without another model call.
+          pages[url] = { ...previous, sourceKind: sourceKind(url), checkedAt, eventDates };
+        } else {
+          const extract = async () => validateProgrammes(await collector.extractProgrammes(source.text, url), source.text);
+          // Model output varies; one misquoted excerpt on a long page earns a single retry, never a looser check.
+          const programmes = await extract().catch((error: unknown) => {
+            if (error instanceof Error && /unsupported aircraft record/.test(error.message)) return extract();
+            throw error;
+          });
+          const id = createHash("sha256").update(url).digest("hex").slice(0, 20);
+          await put(`monitor/reviews/${id}-${Date.now()}.json`, JSON.stringify({ sourceUrl: url, checkedAt, requiresReview: true, before: previous?.programmes ?? null, after: programmeReview(programmes, url), eventCandidates, markdown: source.text }), options);
+          pages[url] = { sourceKind: sourceKind(url), checkedAt, programmes, eventDates, hash };
+        }
+        succeeded.push(url);
+      } catch (error) {
+        const failure = { url, error: error instanceof Error ? error.message : "Invalid extraction" };
+        failed.push(failure);
+        try { await put(`monitor/failures/${Date.now()}-${createHash("sha256").update(url).digest("hex").slice(0, 12)}.json`, JSON.stringify(failure), options); }
+        catch { /* The failure is still recorded in lastCollection. */ }
+      }
+    }
+    // Three pages at a time; pages left over when the budget runs out stay due for the next run.
+    const queue = due.slice(0, collector.maxPages);
+    await Promise.all(Array.from({ length: 3 }, async () => {
+      while (queue.length && Date.now() - started < collector.budgetMs) await collect(queue.shift()!);
+    }));
+    const collection: Collection = { completedAt: new Date().toISOString(), succeeded, failed, remaining: due.length - succeeded.length - failed.length };
+    state.lastCollection = collection;
+    if (failed.length) {
+      state.lastError = `${failed.length} of ${succeeded.length + failed.length} source pages failed collection; previous snapshots preserved`;
+      return { status: succeeded.length ? "partial" : "failed", collection };
+    }
+    delete state.lastError;
+    return { status: "collected", collection };
   } catch (error) {
     if (state) state.lastError = error instanceof Error ? error.message : "Monitor failed";
     throw error;
   } finally {
     // Photos never block collection; failed lookups are retried on a later run.
-    if (state) try { await fillTypePhotos(state, photoLookup); } catch { /* Keep the collected state. */ }
+    if (state) try { await fillTypePhotos(state, collector.photoLookup); } catch { /* Keep the collected state. */ }
     try { if (state) await put("monitor/state.json", JSON.stringify(state), { ...options, allowOverwrite: true }); }
     finally { await put("monitor/lease.json", JSON.stringify({ until: 0 }), { ...options, allowOverwrite: true, ifMatch: acquired.etag }); }
   }
 }
-

@@ -18,3 +18,10 @@ test("programme extraction preserves editions, variants and cancellations and re
   assert.throws(() => validateProgrammes(undefined, text));
   assert.deepEqual(validateProgrammes({ programmes: [] }, "Event dates only"), []);
 });
+
+test("evidence matching treats curly and straight quotes and dash variants alike", () => {
+  const plane = { name: "Mustang", variant: "P-51D", operator: null, displayDates: [], status: "confirmed", displayType: "flying", evidence: `P-51D Mustang 'Jersey Jerk' - US Fighters` };
+  const programmes = { programmes: [{ eventName: "Flying Finale", eventStart: "2024-10-05", eventEnd: "2024-10-05", announcement: "announced", aircraft: [plane] }] };
+  assert.equal(validateProgrammes(programmes, "The P‑51D Mustang ‘Jersey Jerk’ – US Fighters flew.")[0].aircraft.length, 1);
+  assert.throws(() => validateProgrammes(programmes, "The P-51D Mustang flew."), /unsupported aircraft record/);
+});

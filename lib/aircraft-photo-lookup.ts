@@ -1,4 +1,4 @@
-import { photoForName, typeKey, type AircraftPhoto } from "./content";
+import { familyName, namePrefixes, photoForName, typeKey, type AircraftPhoto } from "./content";
 import type { Programme } from "../scripts/programmes";
 
 // Wikimedia Commons and Wikidata lookups shared by the photo script and the hosted monitor.
@@ -10,7 +10,9 @@ export type CommonsFile = {
   license: string; licenseUrl: string; credit: string; restrictions: string;
 };
 export type TypePhoto = AircraftPhoto & { imageAlt: string };
-export type TypePhotoLookups = Record<string, { checkedAt: string; photo: TypePhoto | null }>;
+export type TypePhotoLookups = Record<string, { checkedAt: string; photo: TypePhoto | null; version?: number }>;
+// Bump when matching improves so earlier misses are retried straight away.
+const lookupVersion = 2;
 type AircraftType = { id: string; label: string; names: string[]; parents: string[]; image?: string };
 
 // Reusable on a commercial site with attribution alone. GFDL is excluded because it requires reproducing the licence text.
@@ -52,6 +54,9 @@ const words = (text: string) => text.normalize("NFKD").toLowerCase().split(/[^a-
 export function pickAircraftType(name: string, types: AircraftType[]) {
   const target = words(name);
   if (!target.length) return undefined;
+  // A multi-word name that is exactly one item's label is specific enough ("Grumman F8F Bearcat"); one word ("Typhoon") is not.
+  const labelled = types.filter((type) => typeKey(type.label) === typeKey(name));
+  if (target.length >= 2 && labelled.length === 1) return labelled[0];
   const matches = types.filter((type) => {
     const label = words(type.label);
     return type.names.some((alias) => typeKey(alias) === typeKey(name)) ||
@@ -91,15 +96,23 @@ export function usableTypePhoto(file: CommonsFile) {
 }
 
 /** The Wikidata image for the aircraft type a programme names, or null when the type is unknown, ambiguous or unsuitable. */
-export async function findTypePhoto(name: string): Promise<TypePhoto | null> {
-  const type = pickAircraftType(name, await aircraftTypes(name));
-  if (!type?.image) return null;
-  const [file] = await commonsFiles({ titles: `File:${type.image}` });
-  if (!file || !usableTypePhoto(file)) return null;
-  return {
-    image: file.thumbUrl, imageSource: file.pageUrl, imageCredit: file.credit || "Wikimedia Commons",
-    imageLicense: file.license, imageLicenseUrl: file.licenseUrl || file.pageUrl, imageAlt: `${type.label}, representative photograph`,
-  };
+export async function findTypePhoto(name: string, cache = new Map<string, Promise<AircraftType[]>>()): Promise<TypePhoto | null> {
+  // Most specific first; at least two words, so "Hawker" alone never matches. The family name comes last.
+  const candidates = [...new Set([...namePrefixes(name).filter((candidate) => candidate.split(/\s+/).length >= 2), familyName(name)].filter((c): c is string => Boolean(c)))].slice(0, 5);
+  for (const candidate of candidates) {
+    const key = typeKey(candidate);
+    if (!cache.has(key)) cache.set(key, aircraftTypes(candidate));
+    const type = pickAircraftType(candidate, await cache.get(key)!);
+    // A variant without an image falls through to the broader name.
+    if (!type?.image) continue;
+    const [file] = await commonsFiles({ titles: `File:${type.image}` });
+    if (!file || !usableTypePhoto(file)) return null;
+    return {
+      image: file.thumbUrl, imageSource: file.pageUrl, imageCredit: file.credit || "Wikimedia Commons",
+      imageLicense: file.license, imageLicenseUrl: file.licenseUrl || file.pageUrl, imageAlt: `${type.label}, representative photograph`,
+    };
+  }
+  return null;
 }
 
 /** Monitor state is untrusted storage; only Commons-hosted photos are served. */
@@ -111,10 +124,10 @@ export function validTypePhoto(value: unknown): value is TypePhoto {
     /^https?:\/\//.test(String(photo.imageLicenseUrl)) && allowedLicense(String(photo.imageLicense));
 }
 
-/** Look up photos for programme aircraft without one. Misses are retried after 30 days; network errors on the next run. */
+/** Look up photos for programme aircraft without one. Misses are retried after 30 days or when matching improves; network errors on the next run. */
 export async function fillTypePhotos(
   state: { pages: Record<string, { programmes: Programme[] }>; photos?: TypePhotoLookups },
-  lookup = findTypePhoto, now = new Date(), limit = 10,
+  lookup: (name: string) => Promise<TypePhoto | null> = findTypePhoto, now = new Date(), limit = 25,
 ) {
   const photos = state.photos ??= {};
   const names = new Map<string, string>();
@@ -127,9 +140,9 @@ export async function fillTypePhotos(
   for (const [key, name] of names) {
     if (lookups >= limit || Date.now() > deadline) break;
     const previous = photos[key];
-    if (photoForName(name) || previous?.photo || (previous && now.getTime() - Date.parse(previous.checkedAt) < 30 * day)) continue;
+    if (photoForName(name) || previous?.photo || (previous?.version === lookupVersion && now.getTime() - Date.parse(previous.checkedAt) < 30 * day)) continue;
     lookups++;
-    try { photos[key] = { checkedAt: now.toISOString(), photo: await lookup(name) }; } catch { /* Retry on the next run. */ }
+    try { photos[key] = { checkedAt: now.toISOString(), photo: await lookup(name), version: lookupVersion }; } catch { /* Retry on the next run. */ }
   }
   return photos;
 }
