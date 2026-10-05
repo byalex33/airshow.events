@@ -50,6 +50,17 @@ The optional `search_airshows` WebMCP tool shares the calendar's visible search 
 
 Attribution and source links are in `/about/`; component licences are in `public/licenses/`. BeUI provides morph selects, mobile navigation dock, text reveals, number tickers, export toast stack, circle-blur theme toggle and global morphing search, alongside tabs. Local adaptations use Runeicons, accessible filter labels and keyboard navigation. Theme choice persists in browser storage; motion respects reduced-motion preferences. Runeicons are the original outline SVGs rendered using CSS masks. Photography is bundled locally with source and licence attribution on the credits page.
 
+### Aircraft photos
+
+Aircraft photos come from Wikimedia Commons, filtered to CC0, public domain, CC BY, CC BY-SA and Open Government Licence files. Search, then pick from the contact sheet; search rank says nothing about photo quality.
+
+```sh
+npm run aircraft:photo -- search Avro Lancaster PA474
+npm run aircraft:photo -- add lancaster "File:<Commons file name>" --name "Avro Lancaster" --name "Lancaster" --alt "Lancaster PA474 in flight"
+```
+
+`search` lists large landscape candidates and writes `.aircraft-photos/search.html`. `add` saves a 1600px WebP to `public/images/aircraft/` and records source, author and licence in `lib/aircraft-photos.json`; the credits page is generated from that file. A slug matching an aircraft profile in `lib/content.ts` sets its photo. `--name` lets aircraft discovered in programmes use the photo when their programme name matches; without one they show the silhouette placeholder. Photos are representative of the type, not the programmed airframe.
+
 ### British Airshows coverage
 
 The scheduled checker now uses Firecrawl Map across britishairshows.com, including its sitemap, and scrapes discovered internal pages with raw HTML and Markdown. It extracts Event JSON-LD where present and retains other pages for manual discovery review. This supersedes the single-page direct-fetch schedule described above; `--jsonld-only` remains a manual diagnostic. Site discovery and ordinary pages refresh weekly; pages with structured events in their final week refresh daily. The stored review snapshots are local, not republished content. Mapping does not guarantee every UK event is represented. A 5,000-page discovery ceiling fails explicitly instead of accepting a truncated map. Account and rate-limit errors stop requests. Initial live discovery remains blocked by Firecrawl HTTP 402 as of 14 September 2026.

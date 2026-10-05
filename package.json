@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "aircraft:photo": "tsx scripts/aircraft-photo.ts",
     "check:airshows": "tsx scripts/check-airshows.ts",
     "dev": "next dev --hostname 0.0.0.0",
     "build": "next build",
@@ -29,6 +30,7 @@
     "@types/node": "^22.18.0",
     "@types/react": "^19.1.12",
     "@types/react-dom": "^19.1.9",
+    "sharp": "^0.35.4",
     "tailwindcss": "^4.1.13",
     "tsx": "^4.20.5",
     "typescript": "^5.9.2"

@@ -1,12 +1,19 @@
+import aircraftPhotos from "./aircraft-photos.json";
 export type EventStatus =
   "confirmed" | "provisional" | "cancelled" | "completed";
 export type AircraftCategory =
   "Warbirds" | "Fast jets" | "Display teams" | "Historic bombers" | "Other aircraft";
-export interface Aircraft {
+export interface AircraftPhoto {
+  image: string;
+  imageSource: string;
+  imageCredit: string;
+  imageLicense: string;
+  imageLicenseUrl: string;
+}
+export interface Aircraft extends AircraftPhoto {
   slug: string;
   name: string;
   category: AircraftCategory;
-  image: string;
   imageAlt: string;
   description: string;
   operator: string;
@@ -45,12 +52,12 @@ export interface Appearance {
   sourceUrl: string;
   details: string;
 }
-export const aircraft: Aircraft[] = [
+// Photos and credits are written to aircraft-photos.json by scripts/aircraft-photo.ts.
+const profiles: Omit<Aircraft, keyof AircraftPhoto>[] = [
   {
     slug: "red-arrows",
     name: "RAF Red Arrows",
     category: "Display teams",
-    image: "/images/red-arrows.jpg",
     imageAlt: "Red Arrows flying in formation with white smoke",
     description:
       "Precision, colour and extraordinary teamwork. Follow the RAF aerobatic team through the season, from coastal displays to airfield weekends.",
@@ -61,7 +68,6 @@ export const aircraft: Aircraft[] = [
     slug: "spitfire",
     name: "Supermarine Spitfire",
     category: "Warbirds",
-    image: "/images/spitfire.jpg",
     imageAlt: "Spitfire MH434 in flight",
     description:
       "An unmistakable silhouette and the sound of a Merlin engine. Discover where to see this much-loved British warbird in the air.",
@@ -72,7 +78,6 @@ export const aircraft: Aircraft[] = [
     slug: "typhoon",
     name: "RAF Typhoon",
     category: "Fast jets",
-    image: "/images/typhoon.jpg",
     imageAlt: "RAF Typhoon in flight",
     description:
       "A modern fast-jet display built around power and agility. Explore the RAF display programme records collected here.",
@@ -80,6 +85,17 @@ export const aircraft: Aircraft[] = [
     kind: "aircraft",
   },
 ];
+// imageAlt and names describe photos reused for aircraft discovered in programmes.
+export type AircraftPhotoEntry = AircraftPhoto & { imageAlt?: string; names?: string[] };
+export const aircraftPhotoEntries: Record<string, AircraftPhotoEntry> = aircraftPhotos;
+const photo = ({ imageAlt, names, ...rest }: AircraftPhotoEntry): AircraftPhoto => rest;
+export const aircraft: Aircraft[] = profiles.map((plane) => ({ ...plane, ...photo(aircraftPhotoEntries[plane.slug]) }));
+const typeKey = (name: string) => name.normalize("NFKD").replace(/[^a-z0-9]/gi, "").toLowerCase();
+/** A representative photo for an aircraft type named in a programme, if one has been imported. */
+export function photoForName(name: string) {
+  const entry = Object.values(aircraftPhotoEntries).find((p) => p.imageAlt && p.names?.some((n) => typeKey(n) === typeKey(name)));
+  return entry && { ...photo(entry), imageAlt: entry.imageAlt! };
+}
 export const events: Airshow[] = [
   {
     "slug": "shuttleworth-season-premiere-2026",
@@ -884,7 +900,7 @@ export const events: Airshow[] = [
     "venue": "Airfield",
     "admission": "Ticketed",
     "status": "completed",
-    "image": "/images/spitfire.jpg",
+    "image": "/images/aircraft/spitfire.webp",
     "imageAlt": "Representative Spitfire MH434 photograph, not a photograph of the 2026 event",
     "description": "A two-day airfield show in Norfolk. The 2026 programme included several Spitfire variants, with different combinations on Saturday and Sunday. This page preserves the published edition rather than confirming that every planned display flew.",
     "travel": "The organiser advises following yellow airshow signs from the A11 rather than satellite navigation through Attleborough. The airfield is on Abbey Road, Old Buckenham. Historic traffic arrangements may change for later editions.",

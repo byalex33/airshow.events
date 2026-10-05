@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { aircraft as seedAircraft, appearances as seedAppearances, events, type Aircraft, type Appearance } from "./content";
+import { aircraft as seedAircraft, appearances as seedAppearances, events, photoForName, type Aircraft, type Appearance } from "./content";
 import { parseProgrammes, type Programme } from "../scripts/programmes";
 
 export type Catalog = { aircraft: Aircraft[]; appearances: Appearance[] };
@@ -43,6 +43,7 @@ export function publishedCatalog(state: unknown): Catalog {
       if (!aircraft.has(slug)) aircraft.set(slug, {
         slug, name: [plane.name, plane.variant].filter(Boolean).join(" · "), category: "Other aircraft", kind: "aircraft",
         image: "/images/aircraft-placeholder.svg", imageAlt: "Aircraft silhouette placeholder",
+        imageSource: "", imageCredit: "", imageLicense: "", imageLicenseUrl: "", ...photoForName(plane.name),
         description: "Listed in a published organiser programme. See the appearance records below for dates, participation status and sources.",
         operator: plane.operator || "Operator not published",
       });

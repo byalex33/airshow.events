@@ -1,0 +1,35 @@
+{
+  "lancaster": {
+    "image": "/images/aircraft/lancaster.webp",
+    "imageSource": "https://commons.wikimedia.org/wiki/File:Battle_of_Britain_Memorial_flight_Avro_Lancaster_(cropped).jpg",
+    "imageCredit": "Cpl Phil Major ABIPP",
+    "imageLicense": "OGL v1.0",
+    "imageLicenseUrl": "http://NationalArchives.gov.uk/doc/open-government-licence/version/1/",
+    "imageAlt": "Lancaster PA474 in flight",
+    "names": [
+      "Avro Lancaster",
+      "Lancaster"
+    ]
+  },
+  "red-arrows": {
+    "image": "/images/red-arrows.jpg",
+    "imageSource": "https://unsplash.com/photos/CAHsaJoG54w",
+    "imageCredit": "William Warby",
+    "imageLicense": "Unsplash licence",
+    "imageLicenseUrl": "https://unsplash.com/license"
+  },
+  "spitfire": {
+    "image": "/images/aircraft/spitfire.webp",
+    "imageSource": "https://commons.wikimedia.org/wiki/File:Spitfire_-_Season_Premiere_Airshow_2018_(cropped).jpg",
+    "imageCredit": "Airwolfhound",
+    "imageLicense": "CC BY-SA 2.0",
+    "imageLicenseUrl": "https://creativecommons.org/licenses/by-sa/2.0"
+  },
+  "typhoon": {
+    "image": "/images/aircraft/typhoon.webp",
+    "imageSource": "https://commons.wikimedia.org/wiki/File:Eurofighter_Typhoon_FGR.4_ZK372_RAF_5D4_2423_(53921026945).jpg",
+    "imageCredit": "Ronnie Macdonald from Chelmsford, United Kingdom",
+    "imageLicense": "CC BY 2.0",
+    "imageLicenseUrl": "https://creativecommons.org/licenses/by/2.0"
+  }
+}

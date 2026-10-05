@@ -25,6 +25,14 @@ test("publishes sourced aircraft across lineups, discovery, search and sitemap",
   assert.ok(sitemapEntries(catalog.aircraft).some(e => e.url.endsWith(`/aircraft/${aircraft.slug}/`)));
 });
 
+test("discovered aircraft use an imported photo for their type and a placeholder otherwise", () => {
+  const catalog = publishedCatalog(state({ ...programme, aircraft: [plane, { ...plane, name: "Avro Lancaster", variant: "B I", operator: "RAF", evidence: "Avro Anson confirmed" }] }));
+  const lancaster = catalog.aircraft.find(a => a.name === "Avro Lancaster · B I")!;
+  assert.equal(lancaster.image, "/images/aircraft/lancaster.webp");
+  assert.equal(lancaster.imageCredit, "Cpl Phil Major ABIPP");
+  assert.equal(catalog.aircraft.find(a => a.name === "Avro Anson · Mk I")!.image, "/images/aircraft-placeholder.svg");
+});
+
 test("rejects unknown sources, wrong event identity, wrong year and invalid snapshots", () => {
   for (const data of [state(programme, "https://britishairshows.com/example"), state({ ...programme, eventName: "Another show" }), state({ ...programme, eventStart: "2027-10-04", eventEnd: "2027-10-04" }), state({ ...programme, aircraft: [{ ...plane, displayDates: ["2027-01-01"] }] }), { pages: { [event.officialUrl]: snapshot(programme, "invalid") } }]) {
     assert.deepEqual(publishedCatalog(data), seedCatalog);
