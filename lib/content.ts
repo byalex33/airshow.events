@@ -90,7 +90,7 @@ export type AircraftPhotoEntry = AircraftPhoto & { imageAlt?: string; names?: st
 export const aircraftPhotoEntries: Record<string, AircraftPhotoEntry> = aircraftPhotos;
 const photo = ({ imageAlt, names, ...rest }: AircraftPhotoEntry): AircraftPhoto => rest;
 export const aircraft: Aircraft[] = profiles.map((plane) => ({ ...plane, ...photo(aircraftPhotoEntries[plane.slug]) }));
-const typeKey = (name: string) => name.normalize("NFKD").replace(/[^a-z0-9]/gi, "").toLowerCase();
+export const typeKey = (name: string) => name.normalize("NFKD").replace(/[^a-z0-9]/gi, "").toLowerCase();
 /** A representative photo for an aircraft type named in a programme, if one has been imported. */
 export function photoForName(name: string) {
   const entry = Object.values(aircraftPhotoEntries).find((p) => p.imageAlt && p.names?.some((n) => typeKey(n) === typeKey(name)));

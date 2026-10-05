@@ -4,13 +4,14 @@ import { events, appearances } from "./content";
 import { programmeFormat, programmeReview, validateProgrammes, type Programme } from "../scripts/programmes";
 import { sourceUrls } from "../scripts/check-britishairshows";
 import { extractEvents } from "../scripts/check-jsonld";
+import { fillTypePhotos, findTypePhoto, type TypePhotoLookups } from "./aircraft-photo-lookup";
 
 const options = { access: "private" as const, addRandomSuffix: false, contentType: "application/json" };
 type EventDates = { startDate: string; endDate: string };
 type SourceKind = "edition" | "recurring";
 type Page = { sourceKind?: SourceKind; checkedAt: string; programmes: Programme[]; eventDates?: EventDates[]; hash?: string };
 type Collection = { batchId: string; completedAt: string; succeeded: string[]; failed: { url: string; error: string }[] };
-type State = { mappedAt?: string; urls: string[]; pages: Record<string, Page>; batch?: { id: string; urls: string[]; startedAt: string }; lastError?: string; lastCollection?: Collection };
+type State = { mappedAt?: string; urls: string[]; pages: Record<string, Page>; batch?: { id: string; urls: string[]; startedAt: string }; lastError?: string; lastCollection?: Collection; photos?: TypePhotoLookups };
 // Only reviewed, edition-specific official URLs may stop polling. Reused landing
 // pages and newly discovered URLs remain recurring, even when their dates are past.
 const editionSources = new Set([
@@ -59,7 +60,7 @@ export function pageDue(page: Page | undefined, now = new Date(), sourceUrl?: st
   const currentDay = Math.floor(now.getTime() / 86400000);
   return currentDay - checkedDay >= (near ? 1 : 7);
 }
-export async function runHostedMonitor(harvestOnly = false, storage = { get, put }) {
+export async function runHostedMonitor(harvestOnly = false, storage = { get, put }, photoLookup = findTypePhoto) {
   const { get, put } = storage;
   // ponytail: one global lease serializes cron/webhook runs; a queue is needed if parallel ingestion becomes necessary.
   const lease = await get("monitor/lease.json", { access: "private", useCache: false });
@@ -176,6 +177,8 @@ export async function runHostedMonitor(harvestOnly = false, storage = { get, put
     if (state) state.lastError = error instanceof Error ? error.message : "Monitor failed";
     throw error;
   } finally {
+    // Photos never block collection; failed lookups are retried on a later run.
+    if (state) try { await fillTypePhotos(state, photoLookup); } catch { /* Keep the collected state. */ }
     try { if (state) await put("monitor/state.json", JSON.stringify(state), { ...options, allowOverwrite: true }); }
     finally { await put("monitor/lease.json", JSON.stringify({ until: 0 }), { ...options, allowOverwrite: true, ifMatch: acquired.etag }); }
   }

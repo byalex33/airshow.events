@@ -33,6 +33,13 @@ test("discovered aircraft use an imported photo for their type and a placeholder
   assert.equal(catalog.aircraft.find(a => a.name === "Avro Anson · Mk I")!.image, "/images/aircraft-placeholder.svg");
 });
 
+test("serves only valid Commons photos from monitor state", () => {
+  const photo = { image: "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/a1/Anson.jpg/1600px-Anson.jpg", imageSource: "https://commons.wikimedia.org/wiki/File:Anson.jpg", imageCredit: "Example", imageLicense: "CC BY 4.0", imageLicenseUrl: "https://creativecommons.org/licenses/by/4.0", imageAlt: "Avro Anson, representative photograph" };
+  const image = (stored: unknown) => publishedCatalog({ ...state(), photos: { avroanson: { checkedAt: "2026-10-01T00:00:00Z", photo: stored } } }).aircraft.find(a => a.name === "Avro Anson · Mk I")!.image;
+  assert.equal(image(photo), photo.image);
+  for (const bad of [{ ...photo, image: "https://example.com/anson.jpg" }, { ...photo, imageLicense: "GFDL" }, { ...photo, imageCredit: "" }, null]) assert.equal(image(bad), "/images/aircraft-placeholder.svg");
+});
+
 test("rejects unknown sources, wrong event identity, wrong year and invalid snapshots", () => {
   for (const data of [state(programme, "https://britishairshows.com/example"), state({ ...programme, eventName: "Another show" }), state({ ...programme, eventStart: "2027-10-04", eventEnd: "2027-10-04" }), state({ ...programme, aircraft: [{ ...plane, displayDates: ["2027-01-01"] }] }), { pages: { [event.officialUrl]: snapshot(programme, "invalid") } }]) {
     assert.deepEqual(publishedCatalog(data), seedCatalog);
@@ -77,14 +84,18 @@ test("completed harvest reaches the reader without a rebuild; failed extraction 
   };
   let valid = true;
   t.mock.method(globalThis, "fetch", async () => Response.json({ status: "completed", data: [{ metadata: { sourceURL: url }, markdown: plane.evidence, json: valid ? { programmes: [programme] } : null }] }));
-  await runHostedMonitor(true, storage);
+  const photo = { image: "https://upload.wikimedia.org/wikipedia/commons/6/61/Avro.anson.arp.jpg", imageSource: "https://commons.wikimedia.org/wiki/File:Avro.anson.arp.jpg", imageCredit: "Wikimedia Commons", imageLicense: "Public domain", imageLicenseUrl: "https://commons.wikimedia.org/wiki/File:Avro.anson.arp.jpg", imageAlt: "Avro Anson, representative photograph" };
+  const looked: string[] = [];
+  const lookup = async (name: string) => { looked.push(name); return photo; };
+  await runHostedMonitor(true, storage, lookup);
   const catalog = await readCatalog(storage);
-  assert.ok(catalog.aircraft.some(a => a.name.includes("Anson")));
+  assert.equal(catalog.aircraft.find(a => a.name.includes("Anson"))?.image, photo.image);
   const saved = JSON.parse(blobs.get("monitor/state.json")!);
   saved.batch = { id: "job2", urls: [url], startedAt: "2026-09-22T01:00:00Z" };
   blobs.set("monitor/state.json", JSON.stringify(saved)); valid = false;
-  await runHostedMonitor(true, storage);
+  await runHostedMonitor(true, storage, lookup);
   assert.deepEqual(await readCatalog(storage), catalog);
+  assert.deepEqual(looked, ["Avro Anson"]);
 });
 
 test("storage failures keep bundled pages usable", async () => {

@@ -52,14 +52,16 @@ Attribution and source links are in `/about/`; component licences are in `public
 
 ### Aircraft photos
 
-Aircraft photos come from Wikimedia Commons, filtered to CC0, public domain, CC BY, CC BY-SA and Open Government Licence files. Search, then pick from the contact sheet; search rank says nothing about photo quality.
+Aircraft found in organiser programmes get photos automatically. After each run the hosted monitor looks up programme names without a photo on Wikidata, restricted to aircraft family and aircraft model items. A name must identify exactly one type by label, alias or the label's last words ("Spitfire" → Supermarine Spitfire); variants that are subclasses of a matched family are dropped, and other ambiguous names such as Typhoon or Apache keep the placeholder. The type's Wikidata image is used when Commons lists it as CC0, public domain, CC BY, CC BY-SA or OGL, without restrictions, landscape and at least 1000px wide. Photos are hotlinked from Wikimedia, stored with their credit in `photos` in the monitor state and credited on each aircraft page. Misses are retried after 30 days and network failures on the next run; at most 10 names are looked up per run. Photos show the type, not the programmed airframe.
+
+To choose a better photo, or one for an ambiguous name, import it. Imported photos take precedence over automatic ones.
 
 ```sh
 npm run aircraft:photo -- search Avro Lancaster PA474
 npm run aircraft:photo -- add lancaster "File:<Commons file name>" --name "Avro Lancaster" --name "Lancaster" --alt "Lancaster PA474 in flight"
 ```
 
-`search` lists large landscape candidates and writes `.aircraft-photos/search.html`. `add` saves a 1600px WebP to `public/images/aircraft/` and records source, author and licence in `lib/aircraft-photos.json`; the credits page is generated from that file. A slug matching an aircraft profile in `lib/content.ts` sets its photo. `--name` lets aircraft discovered in programmes use the photo when their programme name matches; without one they show the silhouette placeholder. Photos are representative of the type, not the programmed airframe.
+`search` lists large landscape candidates and writes a contact sheet to `.aircraft-photos/search.html`; search rank says nothing about photo quality. `add` saves a 1600px WebP to `public/images/aircraft/` and records source, author and licence in `lib/aircraft-photos.json`, from which the credits page is generated. A slug matching an aircraft profile in `lib/content.ts` sets its photo; `--name` applies it to programme aircraft with that name.
 
 ### British Airshows coverage
 

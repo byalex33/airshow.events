@@ -29,7 +29,7 @@ export default function Page() {
         <h2>Photography</h2>
         <p>Event photographs come from the organisers’ linked pages and may show previous editions. Copyright remains with the credited photographers and organisations.</p>
         <ul>{Array.from(new Map(events.filter(event => event.imageSource).map(event => [event.image, event])).values()).map(event => <li key={event.image}><a href={event.imageSource}>{event.name.replace(/ 202[67]$/, "")}</a>: {event.imageCredit}.</li>)}</ul>
-        <p>Aircraft images are representative, not evidence of an aircraft’s attendance, and may show a different airframe or operator from a programme. They are resized and displayed with crops and overlays.</p>
+        <p>Aircraft images are representative, not evidence of an aircraft’s attendance, and may show a different airframe or operator from a programme. They are resized and displayed with crops and overlays. Aircraft found in organiser programmes get a photo automatically when the programme name identifies exactly one aircraft type on Wikidata; that photo comes from Wikimedia Commons and is credited on its aircraft page.</p>
         <ul>{Object.entries(aircraftPhotoEntries).map(([slug, photo]) => <li key={slug}>{aircraft.find(plane => plane.slug === slug)?.imageAlt ?? photo.imageAlt}: <a href={photo.imageSource}>{photo.imageCredit}</a>, <a href={photo.imageLicenseUrl}>{photo.imageLicense}</a>.</li>)}</ul>
         <h2>Made with open-source tools</h2>
         <p>

@@ -3,27 +3,11 @@ import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import sharp from "sharp";
 import type { AircraftPhotoEntry } from "../lib/content";
+import { allowedLicense, commonsFiles, type CommonsFile } from "../lib/aircraft-photo-lookup";
 
 // Finds freely licensed aircraft photos on Wikimedia Commons and imports them with their credits.
-const api = "https://commons.wikimedia.org/w/api.php";
-const headers = { "User-Agent": "airshow.events aircraft photo tool (https://airshow.events/contact/)" };
 const manifestPath = resolve("lib/aircraft-photos.json");
 const width = 1600;
-
-export type CommonsFile = {
-  title: string; width: number; height: number; thumbUrl: string; pageUrl: string;
-  license: string; licenseUrl: string; credit: string; restrictions: string;
-};
-
-// Reusable on a commercial site with attribution alone. GFDL is excluded because it requires reproducing the licence text.
-export function allowedLicense(name: string) {
-  return /^(CC0|Public domain|CC BY(-SA)? [1-4]\.0|OGL v[1-3](\.0)?)\b/i.test(name.trim());
-}
-
-export function plainText(html: string) {
-  return html.replace(/<[^>]*>/g, " ").replace(/&nbsp;/g, " ").replace(/&quot;/g, '"').replace(/&#0?39;/g, "'")
-    .replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&").replace(/\s+/g, " ").trim();
-}
 
 // Landscape, large enough for hero crops, and free of trademark or personality-rights restrictions.
 export function suitable(file: CommonsFile) {
@@ -31,25 +15,8 @@ export function suitable(file: CommonsFile) {
   return allowedLicense(file.license) && !file.restrictions && file.width >= width && ratio >= 1.2 && ratio <= 2.4;
 }
 
-async function query(params: Record<string, string>, thumbWidth = width): Promise<CommonsFile[]> {
-  const url = new URL(api);
-  const defaults = { action: "query", format: "json", formatversion: "2", prop: "imageinfo", iiprop: "url|size|extmetadata", iiurlwidth: String(thumbWidth), iiextmetadatafilter: "LicenseShortName|LicenseUrl|Artist|Credit|Restrictions" };
-  for (const [key, value] of Object.entries({ ...defaults, ...params })) url.searchParams.set(key, value);
-  const response = await fetch(url, { headers, signal: AbortSignal.timeout(20000) });
-  if (!response.ok) throw new Error(`Commons API returned ${response.status}`);
-  const pages: any[] = (await response.json()).query?.pages ?? [];
-  return pages.filter((page) => page.imageinfo?.[0]).sort((a, b) => (a.index ?? 0) - (b.index ?? 0)).map((page) => {
-    const info = page.imageinfo[0], meta = info.extmetadata ?? {};
-    const text = (key: string) => plainText(String(meta[key]?.value ?? ""));
-    return {
-      title: page.title, width: info.width, height: info.height, thumbUrl: info.thumburl ?? info.url, pageUrl: info.descriptionurl,
-      license: text("LicenseShortName"), licenseUrl: text("LicenseUrl"), credit: text("Artist") || text("Credit"), restrictions: text("Restrictions"),
-    };
-  });
-}
-
 export async function search(terms: string) {
-  const files = (await query({ generator: "search", gsrnamespace: "6", gsrlimit: "50", gsrsearch: `${terms} filetype:bitmap` }, 480)).filter(suitable);
+  const files = (await commonsFiles({ generator: "search", gsrnamespace: "6", gsrlimit: "50", gsrsearch: `${terms} filetype:bitmap` }, 480)).filter(suitable);
   return files.slice(0, 12);
 }
 
@@ -63,12 +30,12 @@ export function contactSheet(terms: string, files: CommonsFile[]) {
 
 export async function add(slug: string, title: string, options: { names?: string[]; alt?: string } = {}): Promise<AircraftPhotoEntry> {
   if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(slug)) throw new Error("Use a lowercase aircraft slug, e.g. lancaster");
-  const [file] = await query({ titles: title.startsWith("File:") ? title : `File:${title}` });
+  const [file] = await commonsFiles({ titles: title.startsWith("File:") ? title : `File:${title}` });
   if (!file) throw new Error(`No Commons file named ${title}`);
   if (!allowedLicense(file.license)) throw new Error(`${file.license || "Unknown licence"} is not on the allowed licence list`);
   if (!file.credit) throw new Error("Commons records no author for this file; choose another");
   if (file.restrictions) console.warn(`Warning: Commons lists restrictions for this file: ${file.restrictions}`);
-  const response = await fetch(file.thumbUrl, { headers, signal: AbortSignal.timeout(60000) });
+  const response = await fetch(file.thumbUrl, { headers: { "User-Agent": "airshow.events aircraft photos (https://airshow.events/contact/)" }, signal: AbortSignal.timeout(60000) });
   if (!response.ok) throw new Error(`Image download returned ${response.status}`);
   const image = `/images/aircraft/${slug}.webp`;
   await mkdir(resolve("public/images/aircraft"), { recursive: true });
