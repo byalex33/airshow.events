@@ -62,7 +62,10 @@ export default async function Page({
       <div className="container page-main">
         <DataNotice />
         <div className="aircraft-intro">
-          <p>{plane.description}</p>
+          <div>
+            <p>{plane.description}</p>
+            {plane.imageCredit && <p className="photo-credit">Representative photo: <a href={plane.imageSource}>{plane.imageCredit}</a>, <a href={plane.imageLicenseUrl}>{plane.imageLicense}</a>.</p>}
+          </div>
           <ExportButton
             source={events.filter((e) =>
               bookings.some((b) => b.event === e.slug && b.status !== "cancelled"),

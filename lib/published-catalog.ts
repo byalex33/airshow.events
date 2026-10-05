@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
-import { aircraft as seedAircraft, appearances as seedAppearances, events, type Aircraft, type Appearance } from "./content";
+import { aircraft as seedAircraft, appearances as seedAppearances, events, photoForName, typeKey, type Aircraft, type Appearance } from "./content";
 import { parseProgrammes, type Programme } from "../scripts/programmes";
+import { validTypePhoto } from "./aircraft-photo-lookup";
 
 export type Catalog = { aircraft: Aircraft[]; appearances: Appearance[] };
 export const seedCatalog: Catalog = { aircraft: seedAircraft, appearances: seedAppearances };
@@ -29,6 +30,12 @@ export function publishedCatalog(state: unknown): Catalog {
       if (!previous || Date.parse(raw.checkedAt) > Date.parse(previous.checkedAt)) chosen.set(event.slug, { programme, sourceUrl, checkedAt: raw.checkedAt });
     }
   }
+  const lookups = "photos" in state && state.photos && typeof state.photos === "object" ? state.photos as Record<string, { photo?: unknown } | undefined> : {};
+  // Imported photos win over automatic Wikidata ones; the placeholder covers unknown or ambiguous types.
+  const typePhoto = (name: string) => {
+    const photo = lookups[typeKey(name)]?.photo;
+    return photoForName(name) ?? (validTypePhoto(photo) ? photo : undefined);
+  };
   const aircraft = new Map(seedAircraft.map(plane => [plane.slug, plane]));
   const appearances = seedAppearances.filter(a => !chosen.has(a.event));
   for (const [event, { programme, sourceUrl, checkedAt }] of chosen) {
@@ -43,6 +50,7 @@ export function publishedCatalog(state: unknown): Catalog {
       if (!aircraft.has(slug)) aircraft.set(slug, {
         slug, name: [plane.name, plane.variant].filter(Boolean).join(" · "), category: "Other aircraft", kind: "aircraft",
         image: "/images/aircraft-placeholder.svg", imageAlt: "Aircraft silhouette placeholder",
+        imageSource: "", imageCredit: "", imageLicense: "", imageLicenseUrl: "", ...typePhoto(plane.name),
         description: "Listed in a published organiser programme. See the appearance records below for dates, participation status and sources.",
         operator: plane.operator || "Operator not published",
       });

@@ -1052,6 +1052,11 @@ p {
   font-size: 15px;
   line-height: 1.7;
 }
+.aircraft-intro .photo-credit {
+  margin-top: 8px;
+  font-size: 13px;
+  opacity: 0.75;
+}
 .credits {
   max-width: 850px;
   padding-bottom: 30px;
