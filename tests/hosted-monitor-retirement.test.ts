@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { pageDue, runHostedMonitor } from "../lib/hosted-monitor";
+import { fakeCollector, memoryStorage, pageText } from "./monitor-fixture";
 
 const historical = "https://www.south-ayrshire.gov.uk/council-news/International-Ayr-Show-Festival-of-Flight-2026-full-flying-display-schedule-announced";
 const shared = "https://www.shuttleworth.org/about/about-shuttleworth/news/2026-air-shows-announced";
@@ -32,24 +33,11 @@ test("hosted scheduling persists source classifications and omits retired editio
   t.mock.timers.enable({ apis: ["Date"], now });
   const recurring = "https://britishairshows.com/duxford-flying-finale";
   const fresh = "https://www.shuttleworth.org/events/race-day-air-show-2026";
-  const blobs = new Map([["monitor/state.json", JSON.stringify({ mappedAt: now.toISOString(), urls: [historical, recurring, shared, fresh], pages: { [historical]: page, [recurring]: page, [shared]: page } })]]);
-  type Storage = NonNullable<Parameters<typeof runHostedMonitor>[1]>;
-  const storage: Storage = {
-    get: (async (path: string) => {
-      const body = blobs.get(path);
-      return body ? { stream: new Response(body).body, blob: { etag: "test-etag" } } : null;
-    }) as Storage["get"],
-    put: async (path, body) => {
-      blobs.set(path, body as string);
-      return { etag: "test-etag", url: path, downloadUrl: path, pathname: path, contentType: "application/json", contentDisposition: "inline" };
-    },
-  };
-  t.mock.method(globalThis, "fetch", async (url: string, init: RequestInit) => {
-    assert.ok(url.endsWith("/batch/scrape"));
-    assert.deepEqual(JSON.parse(init.body as string).urls, [recurring, shared, fresh]);
-    return Response.json({ success: true, id: "active-sources" });
-  });
-  assert.deepEqual(await runHostedMonitor(false, storage), { status: "submitted", pages: 3 });
+  const { blobs, storage } = memoryStorage({ mappedAt: now.toISOString(), urls: [historical, recurring, shared, fresh], pages: { [historical]: page, [recurring]: page, [shared]: page } });
+  const { collector, fetched } = fakeCollector(Object.fromEntries([recurring, shared, fresh].map(url => [url, pageText(url)])));
+  const result = await runHostedMonitor(storage, collector);
+  assert.equal(result.status, "collected");
+  assert.deepEqual(fetched.sort(), [recurring, shared, fresh].sort());
   const saved = JSON.parse(blobs.get("monitor/state.json")!);
   assert.equal(saved.pages[historical].sourceKind, "edition");
   assert.equal(saved.pages[shared].sourceKind, "edition");

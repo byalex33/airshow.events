@@ -2,23 +2,13 @@ import { createHash } from "node:crypto";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { extractEvents } from "./check-jsonld";
-import { programmeFormat, programmeReview, validateProgrammes } from "./programmes";
+import { programmeReview, validateProgrammes } from "./programmes";
+import { extractProgrammes, fetchSource, sitemapUrls } from "../lib/page-collector";
 
 const directory = resolve(".airshow-monitor");
 async function readState(path: string) {
   try { return JSON.parse(await readFile(path, "utf8")); }
   catch (error) { if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error; }
-}
-async function firecrawl(endpoint: string, body: object) {
-  const response = await fetch(`https://api.firecrawl.dev/v2/${endpoint}`, {
-    method: "POST",
-    headers: { Authorization: `Bearer ${process.env.FIRECRAWL_API_KEY}`, "Content-Type": "application/json" },
-    body: JSON.stringify(body), signal: AbortSignal.timeout(60000),
-  });
-  if (!response.ok) throw new Error(`Firecrawl HTTP ${response.status}`);
-  const result = await response.json();
-  if (!result.success) throw new Error("Firecrawl returned an unsuccessful result");
-  return result;
 }
 export function sourceUrls(links: { url: string }[]) {
   return [...new Set(links.flatMap(({ url }) => {
@@ -36,9 +26,9 @@ export async function checkBritishAirshows() {
   const mapPath = resolve(directory, "britishairshows-map.json");
   let map = await readState(mapPath);
   if (!map || Date.now() - Date.parse(map.checkedAt) >= 7 * 86400000) {
-    const result = await firecrawl("map", { url: "https://britishairshows.com", sitemap: "include", includeSubdomains: false, ignoreQueryParameters: true, limit: 5000 });
-    if (!Array.isArray(result.links) || !result.links.length || result.links.length >= 5000) throw new Error("Site discovery incomplete; previous map preserved");
-    map = { checkedAt: new Date().toISOString(), urls: sourceUrls(result.links) };
+    const links = await sitemapUrls("https://britishairshows.com/sitemap.xml");
+    if (!links.length || links.length >= 5000) throw new Error("Site discovery incomplete; previous map preserved");
+    map = { checkedAt: new Date().toISOString(), urls: sourceUrls(links) };
     await writeFile(mapPath, JSON.stringify(map, null, 2));
   }
   const reports = [];
@@ -51,13 +41,13 @@ export async function checkBritishAirshows() {
     const near = dates.some((event: { startDate: string; endDate: string }) => event.endDate >= today && Date.parse(event.startDate) - Date.parse(today) <= 7 * 86400000);
     if (previous?.programmes && Date.now() - Date.parse(previous.checkedAt) < (near ? 1 : 7) * 86400000) continue;
     try {
-      const { data } = await firecrawl("scrape", { url, formats: ["rawHtml", "markdown", programmeFormat], onlyMainContent: false, maxAge: 0, timeout: 45000 });
-      if (typeof data?.rawHtml !== "string" || !data.markdown || data.metadata?.statusCode >= 400) throw new Error("Unusable source response");
+      const { text: markdown, html } = await fetchSource(url);
+      if (markdown.trim().length < 100) throw new Error("Unusable source response");
       let candidates;
-      try { candidates = extractEvents(data.rawHtml); }
+      try { candidates = extractEvents(html); }
       catch { candidates = null; } // Pages without usable Event JSON-LD remain in the manual review queue.
-      const programmes = programmeReview(validateProgrammes(data.json, data.markdown), url);
-      const snapshot = { url, checkedAt: new Date().toISOString(), candidates, programmes, markdown: data.markdown };
+      const programmes = programmeReview(validateProgrammes(await extractProgrammes(markdown, url), markdown), url);
+      const snapshot = { url, checkedAt: new Date().toISOString(), candidates, programmes, markdown };
       const changed = !previous || JSON.stringify(previous.programmes) !== JSON.stringify(programmes) || JSON.stringify(previous.candidates) !== JSON.stringify(candidates) || previous.markdown !== snapshot.markdown;
       if (changed) await writeFile(resolve(directory, `${id}-${Date.now()}.json`), JSON.stringify({ sourceUrl: url, requiresOfficialVerification: true, before: previous ?? null, after: snapshot }, null, 2));
       await writeFile(statePath, JSON.stringify(snapshot, null, 2));
@@ -66,7 +56,6 @@ export async function checkBritishAirshows() {
       const message = error instanceof Error ? error.message : "Unknown failure";
       reports.push({ url, status: "failed", error: message });
       process.exitCode = 1;
-      if (/HTTP (401|402|403|429)/.test(message)) break;
     }
     if (process.argv.includes("--sample")) break;
   }
