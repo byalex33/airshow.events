@@ -1,14 +1,20 @@
 "use server";
 
+// Bots fill fields with one run of random mixed-case letters, e.g. "TOnrfKfQjjTmslbTjDYbpBi".
+const gibberish = (value: string) => /^[A-Za-z]{8,}$/.test(value) && (value.slice(1).match(/[A-Z]/g)?.length ?? 0) >= 3;
+
 export async function sendContact(form: FormData) {
   const read = (key: string) => {
     const value = form.get(key);
     return typeof value === "string" ? value.trim() : "";
   };
-  if (read("website")) return { ok: true, message: "Thanks, your message has been sent." };
   const name = read("name");
   const email = read("email");
   const message = read("message");
+  // Pretend spam was sent so bots get no signal to adapt.
+  if (read("website") || gibberish(name) || gibberish(message)) {
+    return { ok: true, message: "Thanks, your message has been sent." };
+  }
   if (!name || name.length > 100 || email.length > 254 ||
       !/^[^\s@<>(),;:\\"]+@[^\s@<>(),;:\\"]+\.[^\s@<>(),;:\\"]+$/.test(email) ||
       message.length < 10 || message.length > 5000) {
