@@ -27,6 +27,16 @@ Copy the placeholder template with `cp .env.example .env.local` and set `RESEND_
 
 The missing-event toast appears after eight seconds, once per tab session, and stays until dismissed. It is hidden on the contact page. The form includes a honeypot for basic spam filtering; configure Vercel Firewall rate limits for the contact page's POST requests before public launch.
 
+## Spend alerts
+
+`/api/spend-alert/` relays Vercel Spend Management alerts to Discord. Vercel sends them at 50%, 75% and 100% of the team's on-demand budget, signed with `x-vercel-signature`; unsigned or malformed requests are rejected and nothing is posted.
+
+1. In Discord, open the channel's settings → Integrations → Webhooks → New Webhook, and copy its URL.
+2. In Vercel, open the team's Settings → Billing → Spend Management, set an on-demand budget, enter `https://airshow.events/api/spend-alert/` (with the trailing slash) as the webhook and save. Copy the secret shown.
+3. Add `DISCORD_WEBHOOK_URL` and `SPEND_WEBHOOK_SECRET` to the project's Production environment and redeploy.
+
+If Pause Production Deployments is on, this site pauses with the rest of the team at 100%, so that alert may not reach Discord. Email and SMS notifications still arrive.
+
 ## Content
 
 ### Scheduled source checks

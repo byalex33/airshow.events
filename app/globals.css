@@ -184,32 +184,16 @@ p {
   line-height: 1.05;
 }
 .brand-mark {
-  color: #ff7950;
-  width: 38px;
-  height: 38px;
+  width: 32px;
+  height: 32px;
   display: grid;
   place-items: center;
   flex-shrink: 0;
 }
-.brand-plane {
-  display: block;
-  white-space: pre;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  font-size: 8px;
-  font-weight: 600;
-  line-height: 0.95;
-  letter-spacing: 0;
-  text-align: center;
-  user-select: none;
-}
-.header .brand-plane {
-  animation: brand-plane-flight 5s ease-in-out infinite;
-}
-@keyframes brand-plane-flight {
-  0%, 100% { transform: translateY(0) rotate(-7deg); }
-  25% { transform: translateY(-2px) rotate(0deg); }
-  50% { transform: translateY(0) rotate(7deg); }
-  75% { transform: translateY(1px) rotate(0deg); }
+.brand-mark svg {
+  width: 100%;
+  height: 100%;
+  border-radius: 8px;
 }
 .brand-sub {
   display: block;
@@ -1685,10 +1669,9 @@ h3 {
   letter-spacing: inherit;
   color: var(--muted);
 }
-.brand-mark {
-  width: 48px;
-  height: 40px;
-  color: #f58b57;
+.brand-mark svg {
+  outline: 1px solid var(--line);
+  outline-offset: -1px;
 }
 .header nav {
   gap: 24px;
@@ -2061,10 +2044,8 @@ button[data-slot="button"] {
     letter-spacing: inherit;
   }
   .brand-mark {
-    width: 42px;
-  }
-  .brand-plane {
-    font-size: 7px;
+    width: 30px;
+    height: 30px;
   }
   .header-actions {
     gap: 7px;

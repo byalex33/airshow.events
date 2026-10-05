@@ -12,7 +12,7 @@ export const metadata: Metadata = {
   },
   description: siteDescription,
   robots: { index: true, follow: true, googleBot: { index: true, follow: true, "max-image-preview": "large", "max-snippet": -1, "max-video-preview": -1 } },
-  icons: { icon: "/favicon.svg" },
+  icons: { icon: "/favicon.svg", apple: "/apple-touch-icon.png" },
 };
 export default function RootLayout({
   children,
