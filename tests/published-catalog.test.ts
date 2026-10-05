@@ -5,6 +5,7 @@ import { readCatalog } from "../lib/catalog-storage";
 import { events, emptyFilters, filterEvents } from "../lib/content";
 import { sitemapEntries } from "../lib/metadata";
 import { runHostedMonitor } from "../lib/hosted-monitor";
+import { fakeCollector, memoryStorage, pageText } from "./monitor-fixture";
 
 const event = events.find(e => e.slug === "shuttleworth-season-finale")!;
 const plane = { name: "Avro Anson", variant: "Mk I", operator: "Shuttleworth", displayDates: [event.start], status: "confirmed", displayType: "flying", evidence: "Avro Anson confirmed" };
@@ -71,29 +72,23 @@ test("variants have stable distinct profiles and unknown participation stays unk
   assert.equal(publishedCatalog(state()).appearances.find(a => a.event === event.slug)!.aircraft, rows[0].aircraft);
 });
 
-test("completed harvest reaches the reader without a rebuild; failed extraction preserves it", async t => {
+test("collected programmes reach the reader without a rebuild; failed extraction preserves them", async t => {
+  // The week before the show, when its page is checked daily.
+  t.mock.timers.enable({ apis: ["Date"], now: new Date(`${event.start}T07:00:00Z`).getTime() - 7 * 86400000 });
   const url = event.officialUrl;
-  const blobs = new Map([["monitor/state.json", JSON.stringify({ urls: [url], pages: {}, batch: { id: "job", urls: [url], startedAt: "2026-09-22T00:00:00Z" } })]]);
-  type Storage = NonNullable<Parameters<typeof runHostedMonitor>[1]>;
-  const storage: Storage = {
-    get: (async (path: string) => {
-      const body = blobs.get(path);
-      return body ? { stream: new Response(body).body, blob: { etag: "fixture" } } : null;
-    }) as Storage["get"],
-    put: async (path, body) => { blobs.set(path, body as string); return { etag: "fixture", url: path, downloadUrl: path, pathname: path, contentType: "application/json", contentDisposition: "inline" }; },
-  };
-  let valid = true;
-  t.mock.method(globalThis, "fetch", async () => Response.json({ status: "completed", data: [{ metadata: { sourceURL: url }, markdown: plane.evidence, json: valid ? { programmes: [programme] } : null }] }));
+  const { storage } = memoryStorage({ mappedAt: new Date().toISOString(), urls: [url], pages: {} });
   const photo = { image: "https://upload.wikimedia.org/wikipedia/commons/6/61/Avro.anson.arp.jpg", imageSource: "https://commons.wikimedia.org/wiki/File:Avro.anson.arp.jpg", imageCredit: "Wikimedia Commons", imageLicense: "Public domain", imageLicenseUrl: "https://commons.wikimedia.org/wiki/File:Avro.anson.arp.jpg", imageAlt: "Avro Anson, representative photograph" };
   const looked: string[] = [];
-  const lookup = async (name: string) => { looked.push(name); return photo; };
-  await runHostedMonitor(true, storage, lookup);
+  const photoLookup = async (name: string) => { looked.push(name); return photo; };
+  let valid = true;
+  await runHostedMonitor(storage, fakeCollector({ [url]: pageText(plane.evidence) }, () => valid ? { programmes: [programme] } : null, { photoLookup }).collector);
   const catalog = await readCatalog(storage);
   assert.equal(catalog.aircraft.find(a => a.name.includes("Anson"))?.image, photo.image);
-  const saved = JSON.parse(blobs.get("monitor/state.json")!);
-  saved.batch = { id: "job2", urls: [url], startedAt: "2026-09-22T01:00:00Z" };
-  blobs.set("monitor/state.json", JSON.stringify(saved)); valid = false;
-  await runHostedMonitor(true, storage, lookup);
+  t.mock.timers.tick(86400000);
+  valid = false;
+  const failed = fakeCollector({ [url]: pageText(`${plane.evidence}. Updated`) }, () => null, { photoLookup });
+  assert.equal((await runHostedMonitor(storage, failed.collector)).status, "failed");
+  assert.deepEqual(failed.fetched, [url]);
   assert.deepEqual(await readCatalog(storage), catalog);
   assert.deepEqual(looked, ["Avro Anson"]);
 });

@@ -5,7 +5,8 @@ import { pathToFileURL } from "node:url";
 import { events, appearances, type Airshow } from "../lib/content";
 import { checkJsonLd } from "./check-jsonld";
 import { checkBritishAirshows } from "./check-britishairshows";
-import { programmeFormat, programmeReview, validateProgrammes } from "./programmes";
+import { programmeReview, validateProgrammes } from "./programmes";
+import { extractProgrammes, fetchSource } from "../lib/page-collector";
 
 const directory = resolve(".airshow-monitor");
 export function isDue(event: Pick<Airshow, "start" | "end">, checked: string | undefined, now = new Date()) {
@@ -19,7 +20,6 @@ export function isDue(event: Pick<Airshow, "start" | "end">, checked: string | u
 async function main() {
   if (process.argv.includes("--jsonld-only")) { console.log(JSON.stringify(await checkJsonLd(), null, 2)); return; }
   process.loadEnvFile?.(".env.local");
-  if (!process.env.FIRECRAWL_API_KEY) throw new Error("FIRECRAWL_API_KEY is required");
   console.log(JSON.stringify(await checkBritishAirshows(), null, 2));
   if (process.exitCode) return;
   await mkdir(directory, { recursive: true });
@@ -44,25 +44,10 @@ async function main() {
     if (previous?.programmes && !linkedEvents.some((event) => isDue(event, previous?.checkedAt))) continue;
     if (attempted++ >= limit) break;
     try {
-      const response = await fetch("https://api.firecrawl.dev/v2/scrape", {
-        method: "POST",
-        headers: { Authorization: `Bearer ${process.env.FIRECRAWL_API_KEY}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ url, formats: ["markdown", programmeFormat], onlyMainContent: true, maxAge: 0, timeout: 45000 }),
-        signal: AbortSignal.timeout(60000),
-      });
-      if ([401, 402, 403, 429].includes(response.status)) {
-        report.push({ url, status: "blocked", error: `Firecrawl HTTP ${response.status}; stopped remaining requests` });
-        process.exitCode = 1;
-        break;
-      }
-      if (!response.ok) throw new Error(`Firecrawl HTTP ${response.status}`);
-      const result = await response.json();
-      const markdown = result.data?.markdown;
-      if (!result.success || typeof markdown !== "string" || markdown.trim().length < 100 || result.data?.metadata?.statusCode >= 400) {
-        throw new Error("No usable page content returned");
-      }
+      const { text: markdown } = await fetchSource(url);
+      if (markdown.trim().length < 100) throw new Error("No usable page content returned");
       const checkedAt = new Date().toISOString();
-      const programmes = programmeReview(validateProgrammes(result.data.json, markdown), url);
+      const programmes = programmeReview(validateProgrammes(await extractProgrammes(markdown, url), markdown), url);
       const changed = previous?.markdown !== markdown || JSON.stringify(previous?.programmes) !== JSON.stringify(programmes);
       if (changed) {
         // Keep each changed snapshot for review; source text is untrusted data.

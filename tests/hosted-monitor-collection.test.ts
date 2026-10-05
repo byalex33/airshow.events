@@ -1,97 +1,91 @@
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import { test } from "node:test";
 import { runHostedMonitor } from "../lib/hosted-monitor";
+import { fakeCollector, memoryStorage, pageText } from "./monitor-fixture";
 
-type Storage = NonNullable<Parameters<typeof runHostedMonitor>[1]>;
 const urls = ["https://example.com/one", "https://example.com/two"];
-const valid = (url: string) => ({ metadata: { sourceURL: url }, markdown: "Programme to follow", json: { programmes: [] } });
+const text = pageText("Programme to follow");
 function fixture(requested = urls) {
   const state = {
     mappedAt: new Date().toISOString(), urls: requested, lastError: "Earlier failure",
     pages: Object.fromEntries(requested.map(url => [url, { checkedAt: "2020-01-01T00:00:00Z", programmes: [], hash: "previous" }])),
-    batch: { id: "completed-job", urls: requested, startedAt: new Date().toISOString() },
   };
-  const blobs = new Map([["monitor/state.json", JSON.stringify(state)]]);
-  const storage: Storage = {
-    get: (async (path: string) => {
-      const body = blobs.get(path);
-      return body ? { stream: new Response(body).body, blob: { etag: "test-etag" } } : null;
-    }) as Storage["get"],
-    put: async (path, body) => {
-      blobs.set(path, body as string);
-      return { etag: "test-etag", url: path, downloadUrl: path, pathname: path, contentType: "application/json", contentDisposition: "inline" };
-    },
-  };
-  return { state, blobs, storage, saved: () => JSON.parse(blobs.get("monitor/state.json")!) };
+  return { state, ...memoryStorage(state) };
 }
 
-for (const harvestOnly of [true, false]) {
-  test(`reports partial collection and retains invalid snapshots for ${harvestOnly ? "webhook" : "cron"}`, async t => {
-    const { state, blobs, storage, saved } = fixture();
-    t.mock.method(globalThis, "fetch", async () => Response.json({ status: "completed", data: [valid(urls[0]), { ...valid(urls[1]), json: null }] }));
-    const result = await runHostedMonitor(harvestOnly, storage);
-    assert.equal(result.status, "partial");
-    assert.ok("collection" in result);
-    assert.deepEqual(result.collection?.succeeded, [urls[0]]);
-    assert.equal(result.collection?.failed[0].url, urls[1]);
-    assert.deepEqual(saved().lastCollection, result.collection);
-    assert.deepEqual(saved().pages[urls[1]], { ...state.pages[urls[1]], sourceKind: "recurring" });
-    assert.notEqual(saved().pages[urls[0]].hash, "previous");
-    assert.match(saved().lastError, /1 of 2/);
-    assert.equal(saved().batch, undefined);
-    assert.equal([...blobs.keys()].filter(path => path.startsWith("monitor/failures/")).length, 1);
-  });
-}
+test("reports partial collection and retains snapshots for pages that fail", async () => {
+  const { state, storage, saved, keys } = fixture();
+  const { collector } = fakeCollector({ [urls[0]]: text, [urls[1]]: text }, (_, url) => url === urls[1] ? null : { programmes: [] });
+  const result = await runHostedMonitor(storage, collector);
+  assert.equal(result.status, "partial");
+  assert.ok("collection" in result);
+  assert.deepEqual(result.collection?.succeeded, [urls[0]]);
+  assert.equal(result.collection?.failed[0].url, urls[1]);
+  assert.deepEqual(saved().lastCollection, result.collection);
+  assert.deepEqual(saved().pages[urls[1]], { ...state.pages[urls[1]], sourceKind: "recurring" });
+  assert.equal(saved().pages[urls[0]].hash, createHash("sha256").update(text).digest("hex"));
+  assert.match(saved().lastError, /1 of 2/);
+  assert.equal(keys("monitor/failures/").length, 1);
+});
 
-for (const missing of [false, true]) {
-  test(`reports total failure for ${missing ? "missing" : "invalid"} documents`, async t => {
-    const { state, blobs, storage, saved } = fixture();
-    t.mock.method(globalThis, "fetch", async () => Response.json({ status: "completed", data: missing ? [] : urls.map(url => ({ ...valid(url), json: null })) }));
-    const result = await runHostedMonitor(true, storage);
-    assert.equal(result.status, "failed");
+for (const failure of [new Error("Source HTTP 403"), pageText("").slice(0, 50)]) {
+  test(`reports total failure for ${failure instanceof Error ? "blocked" : "empty"} sources`, async () => {
+    const { state, storage, saved, keys } = fixture();
+    const { collector, extracted } = fakeCollector({ [urls[0]]: failure, [urls[1]]: failure });
+    assert.equal((await runHostedMonitor(storage, collector)).status, "failed");
     assert.deepEqual(saved().pages, Object.fromEntries(Object.entries(state.pages).map(([url, page]) => [url, { ...page, sourceKind: "recurring" }])));
-    assert.deepEqual(saved().lastCollection.succeeded, []);
-    assert.deepEqual(saved().lastCollection.failed.map((failure: { url: string }) => failure.url), urls);
+    assert.deepEqual(saved().lastCollection.failed.map((f: { url: string }) => f.url).sort(), urls);
     assert.match(saved().lastError, /2 of 2/);
-    assert.equal(saved().batch, undefined);
-    const failures = [...blobs.entries()].filter(([path]) => path.startsWith("monitor/failures/"));
-    assert.equal(failures.length, 2);
-    if (missing) for (const [, body] of failures) assert.match(JSON.parse(body).error, /missing/);
+    assert.equal(keys("monitor/failures/").length, 2);
+    assert.deepEqual(extracted, []);
   });
 }
 
-test("accounts for missing URLs across pagination and ignores unrelated documents", async t => {
-  const { storage, saved } = fixture();
-  t.mock.method(globalThis, "fetch", async (url: string) => Response.json(url.includes("?skip=")
-    ? { data: [valid("https://example.com/unrequested"), null] }
-    : { status: "completed", data: [valid(urls[0])], next: "https://api.firecrawl.dev/v2/batch/scrape/completed-job?skip=1" }));
-  assert.equal((await runHostedMonitor(true, storage)).status, "partial");
-  assert.deepEqual(Object.keys(saved().pages), urls);
-  assert.deepEqual(saved().lastCollection.failed, [{ url: urls[1], error: "Requested URL missing from completed batch" }]);
-});
-
-test("full success clears errors and counts each URL once despite duplicate documents", async t => {
-  const { storage, blobs, saved } = fixture([urls[0], urls[0], urls[1]]);
-  t.mock.method(globalThis, "fetch", async () => Response.json({ status: "completed", data: [
-    { ...valid(urls[0]), json: null }, valid(urls[0]), valid(urls[0]), valid(urls[1]), { ...valid(urls[1]), json: null },
-  ] }));
-  assert.equal((await runHostedMonitor(true, storage)).status, "collected");
-  assert.deepEqual(saved().lastCollection.succeeded, urls);
-  assert.deepEqual(saved().lastCollection.failed, []);
+test("full success clears errors, counts each URL once and writes reviews for changed pages", async () => {
+  const { storage, saved, keys } = fixture([urls[0], urls[0], urls[1]]);
+  const { collector, fetched } = fakeCollector({ [urls[0]]: text, [urls[1]]: text });
+  assert.equal((await runHostedMonitor(storage, collector)).status, "collected");
+  assert.deepEqual(fetched.sort(), urls);
+  assert.deepEqual(saved().lastCollection.succeeded.sort(), urls);
   assert.equal(saved().lastError, undefined);
-  assert.equal([...blobs.keys()].filter(path => path.startsWith("monitor/reviews/")).length, 2);
-  assert.equal([...blobs.keys()].some(path => path.startsWith("monitor/failures/")), false);
+  assert.equal(keys("monitor/reviews/").length, 2);
+  assert.equal(keys("monitor/failures/").length, 0);
 });
 
-test("submitting a retry preserves the collection error until a successful harvest", async t => {
-  const { storage, saved } = fixture();
+test("unchanged text keeps programmes without another model call", async () => {
+  const programme = { eventName: "Show", eventStart: "2026-10-04", eventEnd: "2026-10-04", announcement: "unknown", aircraft: [] };
+  const hash = createHash("sha256").update(text).digest("hex");
+  const { storage, saved, keys } = memoryStorage({ mappedAt: new Date().toISOString(), urls: [urls[0]], pages: { [urls[0]]: { checkedAt: "2020-01-01T00:00:00Z", programmes: [programme], hash } } });
+  const { collector, extracted } = fakeCollector({ [urls[0]]: text });
+  assert.equal((await runHostedMonitor(storage, collector)).status, "collected");
+  assert.deepEqual(extracted, []);
+  assert.deepEqual(saved().pages[urls[0]].programmes, [programme]);
+  assert.notEqual(saved().pages[urls[0]].checkedAt, "2020-01-01T00:00:00Z");
+  assert.equal(keys("monitor/reviews/").length, 0);
+});
+
+test("misquoted evidence is retried once and rejected if the retry also misquotes", async () => {
+  const plane = (evidence: string) => ({ name: "Spitfire", variant: null, operator: null, displayDates: [], status: "confirmed", displayType: "flying", evidence });
+  const extraction = (evidence: string) => ({ programmes: [{ eventName: "Show", eventStart: "2026-10-04", eventEnd: "2026-10-04", announcement: "announced", aircraft: [plane(evidence)] }] });
+  const source = pageText("Spitfire confirmed for Sunday.");
   let calls = 0;
-  t.mock.method(globalThis, "fetch", async () => Response.json(++calls === 1
-    ? { status: "completed", data: [] }
-    : { success: true, id: "retry-job" }));
-  assert.equal((await runHostedMonitor(false, storage)).status, "failed");
-  const error = saved().lastError;
-  assert.equal((await runHostedMonitor(false, storage)).status, "submitted");
-  assert.equal(saved().lastError, error);
-  assert.equal(saved().batch.id, "retry-job");
+  const retried = fixture([urls[0]]);
+  const recovered = fakeCollector({ [urls[0]]: source }, () => extraction(++calls === 1 ? "Spitfire ... Sunday" : "Spitfire confirmed for Sunday"));
+  assert.equal((await runHostedMonitor(retried.storage, recovered.collector)).status, "collected");
+  assert.equal(recovered.extracted.length, 2);
+  assert.equal(retried.saved().pages[urls[0]].programmes[0].aircraft[0].name, "Spitfire");
+  const rejected = fixture([urls[0]]);
+  const misquoted = fakeCollector({ [urls[0]]: source }, () => extraction("Spitfire ... Sunday"));
+  assert.equal((await runHostedMonitor(rejected.storage, misquoted.collector)).status, "failed");
+  assert.equal(misquoted.extracted.length, 2);
+  assert.match(rejected.saved().lastCollection.failed[0].error, /unsupported aircraft record/);
+});
+
+test("a failed collection is retried while its error is kept until a successful run", async () => {
+  const { storage, saved } = fixture([urls[0]]);
+  assert.equal((await runHostedMonitor(storage, fakeCollector({ [urls[0]]: new Error("timeout") }).collector)).status, "failed");
+  assert.match(saved().lastError, /1 of 1/);
+  assert.equal((await runHostedMonitor(storage, fakeCollector({ [urls[0]]: text }).collector)).status, "collected");
+  assert.equal(saved().lastError, undefined);
 });
