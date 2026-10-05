@@ -11,7 +11,7 @@ export const metadata: Metadata = {
     template: "%s | Airshow Events",
   },
   description: siteDescription,
-  icons: { icon: "/favicon.svg" },
+  icons: { icon: "/favicon.svg", apple: "/apple-touch-icon.png" },
 };
 export default function RootLayout({
   children,

@@ -184,15 +184,16 @@ p {
   line-height: 1.05;
 }
 .brand-mark {
-  color: #ff7950;
-  width: 38px;
-  height: 38px;
+  width: 32px;
+  height: 32px;
   display: grid;
   place-items: center;
-  transform: rotate(28deg);
+  flex-shrink: 0;
 }
 .brand-mark svg {
-  width: 34px;
+  width: 100%;
+  height: 100%;
+  border-radius: 8px;
 }
 .brand-sub {
   display: block;
@@ -1157,9 +1158,6 @@ p {
     width: 30px;
     height: 30px;
   }
-  .brand-mark svg {
-    width: 29px;
-  }
   .brand-sub {
     font-size: 8px;
   }
@@ -1652,13 +1650,9 @@ h3 {
   letter-spacing: inherit;
   color: var(--muted);
 }
-.brand-mark {
-  width: 28px;
-  height: 28px;
-  color: #f58b57;
-}
 .brand-mark svg {
-  width: 24px;
+  outline: 1px solid var(--line);
+  outline-offset: -1px;
 }
 .header nav {
   gap: 24px;
@@ -2030,9 +2024,9 @@ button[data-slot="button"] {
     font: inherit;
     letter-spacing: inherit;
   }
-  .brand-mark,
-  .brand-mark svg {
-    width: 23px;
+  .brand-mark {
+    width: 30px;
+    height: 30px;
   }
   .header-actions {
     gap: 7px;
