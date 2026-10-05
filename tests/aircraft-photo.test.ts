@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { existsSync } from "node:fs";
 import { test } from "node:test";
-import { aircraft, aircraftPhotoEntries, photoForName } from "../lib/content";
+import { aircraft, aircraftPhotoEntries, familyName, namePrefixes, photoForName } from "../lib/content";
 import { contactSheet, suitable } from "../scripts/aircraft-photo";
 import { allowedLicense, fillTypePhotos, pickAircraftType, plainText, usableTypePhoto, type CommonsFile } from "../lib/aircraft-photo-lookup";
 
@@ -83,5 +83,36 @@ test("monitor fills each programme type once, skips imported photos and retries 
   assert.deepEqual(looked, ["Mystery", "Offline"]);
   looked.length = 0;
   await fillTypePhotos({ pages: state.pages }, lookup, now, 1);
+  assert.equal(looked.length, 1);
+});
+
+test("programme names are shortened to the type they name", () => {
+  assert.deepEqual(namePrefixes("The Red Arrows"), ["The Red Arrows", "Red Arrows", "Red"]);
+  assert.deepEqual(namePrefixes("RAF Typhoon Display Team"), ["RAF Typhoon Display Team", "Typhoon"]);
+  assert.equal(namePrefixes("Hawker Hurricane Mk I P2902").at(-2), "Hawker Hurricane");
+  assert.equal(familyName("North American P-51D Mustang"), "Mustang");
+  assert.equal(familyName("Hawker Hurricane Mk XIIa P2954/P3935"), "Hurricane");
+  assert.equal(familyName("Lockheed 12"), "Lockheed");
+  for (const [name, alt] of [["The Red Arrows", "Red Arrows flying"], ["RAF Typhoon Display Team", "RAF Typhoon"], ["Supermarine Spitfire Mk XIV MV293", "Spitfire MH434"], ["Avro Lancaster B I PA474", "Lancaster PA474"]]) {
+    assert.ok(photoForName(name)?.imageAlt.startsWith(alt), name);
+  }
+  // A family name alone never reaches an imported photo of a different type.
+  assert.equal(photoForName("Hawker Typhoon"), undefined);
+  assert.equal(photoForName("Hawker Hurricane Mk I"), undefined);
+});
+
+test("an exact multi-word label wins; one-word names must be unambiguous", () => {
+  const tigercat = type("Q20", "Grumman F7F Tigercat", { names: ["Grumman F8F Bearcat"] });
+  assert.equal(pickAircraftType("Grumman F8F Bearcat", [type("Q21", "Grumman F8F Bearcat"), tigercat])?.id, "Q21");
+  assert.equal(pickAircraftType("Typhoon", [type("Q22", "Typhoon"), type("Q23", "Eurofighter Typhoon")]), undefined);
+});
+
+test("misses recorded before matching improved are retried immediately", async () => {
+  const programme = { eventName: "Show", eventStart: "2026-10-04", eventEnd: "2026-10-04", announcement: "announced" as const, aircraft: [{ name: "Grumman F8F Bearcat", variant: null, operator: null, displayDates: [], status: "confirmed" as const, displayType: "flying" as const, evidence: "Bearcat" }] };
+  const looked: string[] = [];
+  const state: Parameters<typeof fillTypePhotos>[0] = { pages: { a: { programmes: [programme] } }, photos: { grummanf8fbearcat: { checkedAt: "2026-10-04T07:00:00Z", photo: null } } };
+  await fillTypePhotos(state, async (name) => { looked.push(name); return null; }, new Date("2026-10-05T07:00:00Z"));
+  assert.deepEqual(looked, ["Grumman F8F Bearcat"]);
+  await fillTypePhotos(state, async (name) => { looked.push(name); return null; }, new Date("2026-10-06T07:00:00Z"));
   assert.equal(looked.length, 1);
 });

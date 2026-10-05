@@ -6,7 +6,7 @@ import { validTypePhoto } from "./aircraft-photo-lookup";
 export type Catalog = { aircraft: Aircraft[]; appearances: Appearance[] };
 export const seedCatalog: Catalog = { aircraft: seedAircraft, appearances: seedAppearances };
 const nameKey = (name: string) => name.normalize("NFKD").replace(/\b20\d{2}\b/g, "").replace(/[^a-z0-9]/gi, "").toLowerCase();
-const aliases: Record<string, string> = { redarrows: "red-arrows", rafredarrows: "red-arrows", spitfire: "spitfire", supermarinespitfire: "spitfire", typhoon: "typhoon", raftyphoon: "typhoon", eurofightertyphoon: "typhoon" };
+const aliases: Record<string, string> = { redarrows: "red-arrows", rafredarrows: "red-arrows", theredarrows: "red-arrows", raftyphoondisplayteam: "typhoon", typhoondisplayteam: "typhoon", spitfire: "spitfire", supermarinespitfire: "spitfire", typhoon: "typhoon", raftyphoon: "typhoon", eurofightertyphoon: "typhoon" };
 
 /** Read only validated monitor snapshots. Discovery pages never establish event identity. */
 export function publishedCatalog(state: unknown): Catalog {

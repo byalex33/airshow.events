@@ -16,20 +16,38 @@
     "imageSource": "https://unsplash.com/photos/CAHsaJoG54w",
     "imageCredit": "William Warby",
     "imageLicense": "Unsplash licence",
-    "imageLicenseUrl": "https://unsplash.com/license"
+    "imageLicenseUrl": "https://unsplash.com/license",
+    "imageAlt": "Red Arrows flying in formation with white smoke",
+    "names": [
+      "Red Arrows",
+      "RAF Red Arrows",
+      "Royal Air Force Aerobatic Team"
+    ]
   },
   "spitfire": {
     "image": "/images/aircraft/spitfire.webp",
     "imageSource": "https://commons.wikimedia.org/wiki/File:Spitfire_-_Season_Premiere_Airshow_2018_(cropped).jpg",
     "imageCredit": "Airwolfhound",
     "imageLicense": "CC BY-SA 2.0",
-    "imageLicenseUrl": "https://creativecommons.org/licenses/by-sa/2.0"
+    "imageLicenseUrl": "https://creativecommons.org/licenses/by-sa/2.0",
+    "imageAlt": "Spitfire MH434 in flight",
+    "names": [
+      "Spitfire",
+      "Supermarine Spitfire"
+    ]
   },
   "typhoon": {
     "image": "/images/aircraft/typhoon.webp",
     "imageSource": "https://commons.wikimedia.org/wiki/File:Eurofighter_Typhoon_FGR.4_ZK372_RAF_5D4_2423_(53921026945).jpg",
     "imageCredit": "Ronnie Macdonald from Chelmsford, United Kingdom",
     "imageLicense": "CC BY 2.0",
-    "imageLicenseUrl": "https://creativecommons.org/licenses/by/2.0"
+    "imageLicenseUrl": "https://creativecommons.org/licenses/by/2.0",
+    "imageAlt": "RAF Typhoon in flight",
+    "names": [
+      "Typhoon",
+      "RAF Typhoon",
+      "Eurofighter Typhoon",
+      "Typhoon FGR4"
+    ]
   }
 }

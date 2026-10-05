@@ -91,10 +91,23 @@ export const aircraftPhotoEntries: Record<string, AircraftPhotoEntry> = aircraft
 const photo = ({ imageAlt, names, ...rest }: AircraftPhotoEntry): AircraftPhoto => rest;
 export const aircraft: Aircraft[] = profiles.map((plane) => ({ ...plane, ...photo(aircraftPhotoEntries[plane.slug]) }));
 export const typeKey = (name: string) => name.normalize("NFKD").replace(/[^a-z0-9]/gi, "").toLowerCase();
-/** A representative photo for an aircraft type named in a programme, if one has been imported. */
+// Programmes name airframes, not types: "The Red Arrows", "RAF Typhoon Display Team", "Hawker Hurricane Mk I P2902".
+const typeWords = (name: string) => name.trim().replace(/^(the|raf|bbmf)\s+/i, "").replace(/\s+display team$/i, "").split(/\s+/).filter(Boolean);
+/** The cleaned name, then shorter by one trailing word at a time: "Hawker Hurricane Mk I P2902" → … → "Hawker Hurricane" → "Hawker". */
+export function namePrefixes(name: string) {
+  const words = typeWords(name);
+  return [...new Set([name.trim(), ...words.map((_, i) => words.slice(0, words.length - i).join(" "))])].filter(Boolean);
+}
+/** The last plain word, usually the family name: "North American P-51D Mustang" → "Mustang". */
+export function familyName(name: string) {
+  return typeWords(name).filter((word) => /^[a-z]{4,}$/i.test(word) && !/^(mark|[ivxlc]+[a-z]?)$/i.test(word)).at(-1);
+}
+/** An imported photo for an aircraft named in a programme, matched on its name or a shorter form of it. */
 export function photoForName(name: string) {
-  const entry = Object.values(aircraftPhotoEntries).find((p) => p.imageAlt && p.names?.some((n) => typeKey(n) === typeKey(name)));
-  return entry && { ...photo(entry), imageAlt: entry.imageAlt! };
+  for (const candidate of namePrefixes(name)) {
+    const entry = Object.values(aircraftPhotoEntries).find((p) => p.imageAlt && p.names?.some((n) => typeKey(n) === typeKey(candidate)));
+    if (entry) return { ...photo(entry), imageAlt: entry.imageAlt! };
+  }
 }
 export const events: Airshow[] = [
   {
